@@ -192,7 +192,7 @@ AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 # Static Files Settings
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'app', 'static'),  # Point to your app's static directory
+    os.path.join(BASE_DIR, 'hello', 'static')  # Point to your app's static directory
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/static/'
