@@ -17,6 +17,7 @@ Including another URLconf
 
 # from django.contrib import admin
 from django.urls import path
+from django.contrib import admin
 
 import hello.views
 
@@ -25,5 +26,5 @@ urlpatterns = [
     path("db/", hello.views.db, name="db"),
     # Uncomment this and the entry in `INSTALLED_APPS` if you wish to use the Django admin feature:
     # https://docs.djangoproject.com/en/5.1/ref/contrib/admin/
-    # path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls),
 ]
