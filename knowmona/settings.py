@@ -68,7 +68,7 @@ else:
 # https://docs.djangoproject.com/en/5.1/ref/contrib/messages/
 INSTALLED_APPS = [
     # Use WhiteNoise's runserver implementation instead of the Django default, for dev-prod parity.
-    #"whitenoise.runserver_nostatic",
+    "whitenoise.runserver_nostatic",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
