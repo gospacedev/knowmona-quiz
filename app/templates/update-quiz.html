@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="col-md-6 offset-md-3">
+    <h1>Update a new quiz</h1>
+    <br />
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ update_quiz_form.as_p }}
+
+        {{ update_question_formset.management_form }}
+        {% for question_form in update_question_formset %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Question {{ forloop.counter }}</h5>
+                    {{ question_form.as_p }}
+                    
+                    <h6>Choices</h6>
+                    {% if update_choice_formset %}
+                        {{ update_choice_formset.management_form }}
+                        {% for choice_form in update_choice_formset %}
+                            {{ choice_form.as_p }}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <br />
+        <button type="submit" class="btn btn-secondary">Update</button>
+        <a href="{% url 'app' %}" class="btn btn-secondary">Back</a>
+    </form>
+
+</div>
+
+{% endblock %}
