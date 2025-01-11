@@ -54,7 +54,10 @@ def app(request):
                     quiz.save()
                     save_quiz_from_json(json_output, external_reference, quiz)
                     new_quiz_id = quiz.id
-                    return redirect('quiz', pk=new_quiz_id)
+                    if new_quiz_id:
+                        return redirect('quiz', pk=new_quiz_id)
+                    else:
+                        messages.error(request, "Quiz ID could not be determined.")
 
                 except Exception as e:
                     messages.error(request, f"Error creating quiz: {e}")

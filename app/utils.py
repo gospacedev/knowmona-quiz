@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 
 
 load_dotenv()
+
 client = Together(api_key=os.getenv("TOGETHER_API_KEY"))
 google_api_key = os.getenv("GOOGLE_API_KEY")
 search_engine_id = os.getenv("SEARCH_ENGINE_ID")
@@ -16,6 +17,7 @@ search_engine_id = os.getenv("SEARCH_ENGINE_ID")
 def get_external_data(search_term, api_key, cse_id, **kwargs):
 
     service = build("customsearch", "v1", developerKey=api_key)
+    
     res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
     
     # Create separate strings for links and snippets
