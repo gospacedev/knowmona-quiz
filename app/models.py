@@ -57,6 +57,8 @@ class Quiz(models.Model):
     tone = models.CharField(
         max_length=12, choices=TONE_CHOICES, default="casual")
     
+    user = models.ForeignKey(LearnerUser, on_delete=models.CASCADE)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
