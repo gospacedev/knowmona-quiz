@@ -54,9 +54,9 @@ if not IS_HEROKU_APP:
 # list the expected hostnames explicitly in production to prevent HTTP Host header attacks. See:
 # https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-ALLOWED_HOSTS
 if IS_HEROKU_APP:
-    ALLOWED_HOSTS = ["*"]
+    ALLOWED_HOSTS = ["*", "knowmona-c08e02f17b36.herokuapp.com"]
 else:
-    ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0", "[::]"]
+    ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0", "[::]", "knowmona-c08e02f17b36.herokuapp.com"]
 
 
 # Application definition
