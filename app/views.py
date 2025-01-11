@@ -283,8 +283,6 @@ def signup_user(request):
             user.is_active = False
             user.save()
             activateEmail(request, user, form.cleaned_data.get('email'))
-
-            # messages.success(request, "You Have Successfully Registered! Welcome!")
             return redirect('signup')
     else:
         form = SignUpLearnerUser()

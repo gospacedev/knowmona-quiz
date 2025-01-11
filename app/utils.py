@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from .schemas import QuizSchematic
 from .models import Question, Choice, Reference, Explanation
 from googleapiclient.discovery import build
-import time
+
 
 load_dotenv()
 
@@ -17,23 +17,21 @@ search_engine_id = os.getenv("SEARCH_ENGINE_ID")
 def get_external_data(search_term, api_key, cse_id, **kwargs):
 
     service = build("customsearch", "v1", developerKey=api_key)
-
+    
     res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
-
+    
     # Create separate strings for links and snippets
     links = ""
     snippets = ""
-
+    
     # Extract and append links and snippets separately
     for item in res['items']:
         links += f"{item['link']}\n"
         snippets += f"{item.get('snippet', 'No snippet available')}\n"
-
+    
     return snippets.strip(), links.strip()
 
-
 def infer_quiz_json(form):
-    start_time = time.time()
     if form.is_valid():
         question_difficulty = form.cleaned_data.get('question_difficulty')
         if question_difficulty == "" or question_difficulty == None:
@@ -45,15 +43,9 @@ def infer_quiz_json(form):
 
         topic = form.cleaned_data.get('topic')
 
-        step_start = time.time()
+        external_data, external_reference = get_external_data(topic, google_api_key, search_engine_id, num=10)
 
-        external_data, external_reference = get_external_data(
-            topic, google_api_key, search_engine_id, num=10)
-
-        print(f"External web serch took {time.time() - step_start} seconds")
-
-        instructions_prompt = f"""<s> [INST] Your are a great teacher and your task is to create 10 questions with 4 choices with a {question_difficulty} difficulty in a {tone} tone about {
-            topic}, then create an answers. Index in JSON format, the questions as "Q#":"" to "Q#":"", the four choices as "choice_1" to "choice_4", the answers as "choice_1" to "choice_4", and a one-sentence explanation. WRITE NOTHING ELSE DO AND NOT REPEAT QUESTIONS Please ulitize these information: """ + external_data + f"""[/INST]"""
+        instructions_prompt = f"""<s> [INST] Your are a great teacher and your task is to create 10 questions with 4 choices with a {question_difficulty} difficulty in a {tone} tone about {topic}, then create an answers. Index in JSON format, the questions as "Q#":"" to "Q#":"", the four choices as "choice_1" to "choice_4", the answers as "choice_1" to "choice_4", and a one-sentence explanation. WRITE NOTHING ELSE DO AND NOT REPEAT QUESTIONS Please ulitize these information: """ + external_data + f"""[/INST]"""
 
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
@@ -63,9 +55,6 @@ def infer_quiz_json(form):
                 "schema": QuizSchematic.model_json_schema(),
             },
         )
-
-        print(f"Total response processing time: {
-              time.time() - start_time} seconds")
 
         output = response.choices[0].message.content
 
@@ -81,10 +70,6 @@ def infer_quiz_json(form):
 
 def save_quiz_from_json(quiz_data, external_reference, quiz):
 
-    questions_to_create = []
-    explanations_to_create = []
-    choices_to_create = []
-
     for question_num in range(1, 11):
         question_key = f"Q{question_num}"
 
@@ -92,17 +77,15 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
         if not question_data:
             continue
 
-        question = Question(
+        question = Question.objects.create(
             quiz=quiz,
             text=question_data["question"]
         )
-        questions_to_create.append(question)
 
-        explanation = Explanation(
+        explanation = Explanation.objects.create(
             question=question,
             text=question_data["explanation"]
         )
-        explanations_to_create.append(explanation)
 
         correct_answer = question_data.get("answer")
         if not correct_answer:
@@ -116,14 +99,13 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
 
             is_correct = (choice_key == correct_answer)
 
-            choices_to_create.append(
-                Choice(question=question, text=choice_text, is_correct=is_correct))
+            Choice.objects.create(
+                question=question,
+                text=choice_text,
+                is_correct=is_correct
+            )
 
-    Question.objects.bulk_create(questions_to_create)
-    Explanation.objects.bulk_create(explanations_to_create)
-    Choice.objects.bulk_create(choices_to_create)
-
-    Reference(
+    Reference.objects.create(
         quiz=quiz,
         text=external_reference
     )
