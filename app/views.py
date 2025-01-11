@@ -12,6 +12,7 @@ from .utils import infer_quiz_json, save_quiz_from_json
 from django.contrib.auth import login
 from django.shortcuts import render, redirect
 from dotenv import load_dotenv
+import time
 
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
@@ -40,6 +41,7 @@ def contact(request):
 
 def app(request):
     nickname = None
+    start_time = time.time()
 
     if request.user.is_authenticated:
         nickname = request.user.nickname
@@ -49,10 +51,13 @@ def app(request):
                                  'question_difficulty': 'Average', 'tone': 'Casual'})
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
+                step_start = time.time()
                 json_output, external_reference = infer_quiz_json(quiz_form)
+                print(f"Infer JSON took {time.time() - step_start} seconds")
                 try:
                     quiz.save()
                     save_quiz_from_json(json_output, external_reference, quiz)
+                    print(f"Total processing time: {time.time() - start_time} seconds")
                     new_quiz_id = quiz.id
                     if new_quiz_id:
                         return redirect('quiz', pk=new_quiz_id)
