@@ -56,7 +56,7 @@ class Quiz(models.Model):
         max_length=12, choices=QUESTION_DIFFICULTY_CHOICES, default="average")
     tone = models.CharField(
         max_length=12, choices=TONE_CHOICES, default="casual")
-
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

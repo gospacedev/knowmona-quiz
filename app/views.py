@@ -101,9 +101,8 @@ def bites(request):
 
 
 def quizzes(request):
-    quizzes = Quiz.objects.filter(user=request.user)
-
     if request.user.is_authenticated:
+        quizzes = Quiz.objects.filter(user=request.user)
 
         quiz_list = {
             'quizzes': quizzes,
