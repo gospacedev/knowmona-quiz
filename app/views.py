@@ -54,7 +54,7 @@ def app(request):
                     quiz.save()
                     save_quiz_from_json(json_output, external_reference, quiz)
                     new_quiz_id = quiz.id
-                    return redirect('quiz_record', pk=new_quiz_id)
+                    return redirect('quiz', pk=new_quiz_id)
 
                 except Exception as e:
                     messages.error(request, f"Error creating quiz: {e}")
@@ -112,7 +112,7 @@ def quizzes(request):
         return redirect('login')
 
 
-def quiz_record(request, pk):
+def quiz(request, pk):
     if request.user.is_authenticated:
         quiz = get_object_or_404(Quiz, id=pk)
         questions = Question.objects.filter(quiz=quiz)
@@ -233,22 +233,24 @@ def activate(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = LearnerUser.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, LearnerUser.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, LearnerUser.DoesNotExist):
         user = None
 
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
 
-        messages.success(request, 'Thank you for your email confirmation. Now you can login your account.')
+        messages.success(
+            request, 'Thank you for your email confirmation. Now you can login your account.')
         return redirect('login')
     else:
         messages.error(request, 'Activation link is invalid!')
-    
+
     return redirect('app')
 
+
 def activateEmail(request, user, to_email):
-    mail_subject = 'Activate your user account.'
+    mail_subject = 'Activate your Knowmona account'
     message = render_to_string('template_activate_account.html', {
         'user': user.email,
         'domain': get_current_site(request).domain,
@@ -258,7 +260,7 @@ def activateEmail(request, user, to_email):
     })
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
-        messages.success(request, f'Dear {user.nickname}, please go to you email, {to_email}, inbox and click on \
+        messages.success(request, f'Hi {user.nickname}! Please go to you email, {to_email}, inbox and click on \
             received activation link to confirm and complete the registration. Note: Check your spam folder.')
     else:
         messages.error(request, f'Problem sending confirmation email to {to_email}, check if you typed it correctly.')

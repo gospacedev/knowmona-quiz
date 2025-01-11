@@ -42,12 +42,6 @@
     <div class="container-fluid round-font-style">
         <div class="row flex-nowrap">
             <div class="py-3">
-                <h2 style="color:rgb(2, 202, 202); font-weight: 550; text-align: center;">knowmona</h2>
-                <br>
-                <div class="col-md-4 offset-md-4 py-4">
-                    {% block content %}
-                    {% endblock %}
-                </div>
                 {% if messages %}
                 {% for message in messages %}
                 <div class="alert alert-dark alert-dismissible fade show" role="alert">
@@ -56,6 +50,12 @@
                 </div>
                 {% endfor %}
                 {% endif %}
+                <h2 style="color:rgb(2, 202, 202); font-weight: 550; text-align: center;">knowmona</h2>
+                <br>
+                <div class="col-md-4 offset-md-4 py-4">
+                    {% block content %}
+                    {% endblock %}
+                </div>
             </div>
         </div>
     </div>
