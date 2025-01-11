@@ -51,6 +51,7 @@ def app(request):
                                  'question_difficulty': 'Average', 'tone': 'Casual'})
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
+                quiz.user = request.user
                 step_start = time.time()
                 json_output, external_reference = infer_quiz_json(quiz_form)
                 print(f"Infer JSON took {time.time() - step_start} seconds")
