@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from .schemas import QuizSchematic
 from .models import Question, Choice, Reference, Explanation
 from googleapiclient.discovery import build
+import time
+
 
 
 load_dotenv()
@@ -32,6 +34,7 @@ def get_external_data(search_term, api_key, cse_id, **kwargs):
     return snippets.strip(), links.strip()
 
 def infer_quiz_json(form):
+    start_time = time.time()
     if form.is_valid():
         question_difficulty = form.cleaned_data.get('question_difficulty')
         if question_difficulty == "" or question_difficulty == None:
@@ -43,7 +46,11 @@ def infer_quiz_json(form):
 
         topic = form.cleaned_data.get('topic')
 
+        step_start = time.time()
+
         external_data, external_reference = get_external_data(topic, google_api_key, search_engine_id, num=10)
+
+        print(f"External web serch took {time.time() - step_start} seconds")
 
         instructions_prompt = f"""<s> [INST] Your are a great teacher and your task is to create 10 questions with 4 choices with a {question_difficulty} difficulty in a {tone} tone about {topic}, then create an answers. Index in JSON format, the questions as "Q#":"" to "Q#":"", the four choices as "choice_1" to "choice_4", the answers as "choice_1" to "choice_4", and a one-sentence explanation. WRITE NOTHING ELSE DO AND NOT REPEAT QUESTIONS Please ulitize these information: """ + external_data + f"""[/INST]"""
 
@@ -56,10 +63,11 @@ def infer_quiz_json(form):
             },
         )
 
+        print(f"Total response processing time: {time.time() - start_time} seconds")
+
         output = response.choices[0].message.content
 
-        print(f"Raw Instruction Prompt{instructions_prompt}\n\n")
-        print(json.loads(output))
+        print(json.dumps(output, indent=4))
 
         return json.loads(output), external_reference
     else:
@@ -82,13 +90,11 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
             quiz=quiz,
             text=question_data["question"]
         )
-        print(f"Created Question: {question.text}")
 
         explanation = Explanation.objects.create(
             question=question,
             text=question_data["explanation"]
         )
-        print(f"Created Explanation: {explanation.text}")
 
         correct_answer = question_data.get("answer")
         if not correct_answer:
@@ -107,7 +113,6 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
                 text=choice_text,
                 is_correct=is_correct
             )
-            print(f"Created Choice: {choice_text} - Correct: {is_correct}")
 
     Reference.objects.create(
         quiz=quiz,
