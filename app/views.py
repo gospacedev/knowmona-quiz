@@ -11,6 +11,9 @@ from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateCho
 from .utils import infer_quiz_json, save_quiz_from_json
 from django.contrib.auth import login
 from django.shortcuts import render, redirect
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def home(request):
@@ -256,7 +259,7 @@ def auth_receiver(request):
     print(token)
 
     user_data = id_token.verify_oauth2_token(
-        token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID']
+        token, requests.Request(), os.getenv('GOOGLE_OAUTH_CLIENT_ID')
     )
     print(user_data)
     account_email = user_data["email"]
