@@ -6,14 +6,15 @@ import os
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation
+from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile
 from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateChoiceFormSet, ProfileForm
 from .utils import infer_quiz_json, save_quiz_from_json
 from django.contrib.auth import login
 from django.shortcuts import render, redirect
 from dotenv import load_dotenv
 import time
-
+from PyPDF2 import PdfReader
+from docx import Document
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -28,6 +29,8 @@ load_dotenv()
 
 
 def home(request):
+    if request.user.is_authenticated:
+        return redirect('app')
     return render(request, "home.html")
 
 
@@ -41,24 +44,51 @@ def contact(request):
 
 def app(request):
     nickname = None
-    start_time = time.time()
 
     if request.user.is_authenticated:
         nickname = request.user.nickname
 
         if request.method == 'POST':
+            files = request.FILES.getlist('files')
+        
+        uploaded_texts = []
+
+        for file in files:
+            # Save the uploaded file associated with the logged-in user
+            uploaded_file = UploadedFile(user=request.user, file=file)
+            uploaded_file.save()
+            file_path = uploaded_file.file.path
+
+            # Process file based on its type
+            file_extension = os.path.splitext(file.name)[1].lower()
+
+            if file_extension == '.txt':
+                with open(file_path, 'r') as f:
+                    uploaded_texts.append(f.read())
+
+            elif file_extension == '.pdf':
+                reader = PdfReader(file_path)
+                text = ''
+                for page in reader.pages:
+                    text += page.extract_text()
+                uploaded_texts.append(text)
+
+            elif file_extension == '.docx':
+                doc = Document(file_path)
+                text = ''
+                for paragraph in doc.paragraphs:
+                    text += paragraph.text + '\n'
+                uploaded_texts.append(text)
+
             quiz_form = QuizForm(request.POST, initial={
                                  'question_difficulty': 'Average', 'tone': 'Casual'})
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
-                step_start = time.time()
-                json_output, external_reference = infer_quiz_json(quiz_form)
-                print(f"Infer JSON took {time.time() - step_start} seconds")
+                json_output, external_reference = infer_quiz_json(quiz_form, uploaded_texts)
                 try:
                     quiz.save()
                     save_quiz_from_json(json_output, external_reference, quiz)
-                    print(f"Total processing time: {time.time() - start_time} seconds")
                     new_quiz_id = quiz.id
                     if new_quiz_id:
                         return redirect('quiz', pk=new_quiz_id)
