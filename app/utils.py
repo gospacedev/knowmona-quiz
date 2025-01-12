@@ -50,8 +50,6 @@ def infer_quiz_json(form, uploaded_texts=""):
 
         instructions_prompt = f"""<s> [INST] Your are a great teacher and your task is to create 10 questions with 4 choices with a {question_difficulty} difficulty in a {tone} tone about {topic}, then create an answers. Index in JSON format, the questions as "Q#":"" to "Q#":"", the four choices as "choice_1" to "choice_4", the answers as "choice_1" to "choice_4", and a one-sentence explanation. WRITE NOTHING ELSE DO AND NOT REPEAT QUESTIONS Please ulitize these information from the Internet:  """ + external_data + """\nUser inputted information: """ + uploaded_texts + f"""[/INST]"""
 
-        print(uploaded_texts)
-
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             messages=[{"role": "system", "content": instructions_prompt}],

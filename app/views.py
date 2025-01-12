@@ -44,56 +44,61 @@ def contact(request):
 
 def app(request):
     nickname = None
+    start_time = time.time()
 
     if request.user.is_authenticated:
         nickname = request.user.nickname
 
         if request.method == 'POST':
-            files = request.FILES.getlist('files')
-        
-        uploaded_texts = []
-
-        for file in files:
-            # Save the uploaded file associated with the logged-in user
-            uploaded_file = UploadedFile(user=request.user, file=file)
-            uploaded_file.save()
-            file_path = uploaded_file.file.path
-
-            # Process file based on its type
-            file_extension = os.path.splitext(file.name)[1].lower()
-
-            if file_extension == '.txt':
-                with open(file_path, 'r') as f:
-                    uploaded_texts.append(f.read())
-
-            elif file_extension == '.pdf':
-                reader = PdfReader(file_path)
-                text = ''
-                for page in reader.pages:
-                    text += page.extract_text()
-                uploaded_texts.append(text)
-
-            elif file_extension == '.docx':
-                doc = Document(file_path)
-                text = ''
-                for paragraph in doc.paragraphs:
-                    text += paragraph.text + '\n'
-                uploaded_texts.append(text)
-
             quiz_form = QuizForm(request.POST, initial={
                                  'question_difficulty': 'Average', 'tone': 'Casual'})
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
+
+            if request.method == 'POST':
+                files = request.FILES.getlist('files')
+
+            uploaded_texts = []
+
+            for file in files:
+                uploaded_file = UploadedFile(quiz=quiz, file=file)
+                uploaded_file.save()
+                file_path = uploaded_file.file.path
+
+                file_extension = os.path.splitext(file.name)[1].lower()
+
+                if file_extension == '.txt':
+                    with open(file_path, 'r') as f:
+                        uploaded_texts.append(f.read())
+
+                elif file_extension == '.pdf':
+                    reader = PdfReader(file_path)
+                    text = ''
+                    for page in reader.pages:
+                        text += page.extract_text()
+                    uploaded_texts.append(text)
+
+                elif file_extension == '.docx':
+                    doc = Document(file_path)
+                    text = ''
+                    for paragraph in doc.paragraphs:
+                        text += paragraph.text + '\n'
+                    uploaded_texts.append(text)
+
+                print(uploaded_texts)
+
                 json_output, external_reference = infer_quiz_json(quiz_form, uploaded_texts)
                 try:
                     quiz.save()
                     save_quiz_from_json(json_output, external_reference, quiz)
+
                     new_quiz_id = quiz.id
                     if new_quiz_id:
                         return redirect('quiz', pk=new_quiz_id)
                     else:
-                        messages.error(request, "Quiz ID could not be determined.")
+                        messages.error(
+                            request, "Quiz ID could not be determined.")
 
                 except Exception as e:
                     messages.error(request, f"Error creating quiz: {e}")
@@ -302,7 +307,8 @@ def activateEmail(request, user, to_email):
         messages.success(request, f'Hi {user.nickname}! Please go to you email, {to_email}, inbox and click on \
             received activation link to confirm and complete the registration. Note: Check your spam folder.')
     else:
-        messages.error(request, f'Problem sending confirmation email to {to_email}, check if you typed it correctly.')
+        messages.error(request, f'Problem sending confirmation email to {
+                       to_email}, check if you typed it correctly.')
 
 
 def signup_user(request):
