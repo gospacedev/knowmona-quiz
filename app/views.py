@@ -55,6 +55,8 @@ def app(request):
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
 
+                quiz.save()
+
                 # Handle file uploads
                 files = request.FILES.getlist('files')
                 uploaded_texts = []
@@ -81,10 +83,6 @@ def app(request):
                         continue
 
                 try:
-                    # Save the quiz
-                    quiz.save()
-
-                    # Infer quiz and save
                     json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
                     save_quiz_from_json(json_output, external_reference, quiz)
                     return redirect('quiz', pk=quiz.id)
