@@ -85,7 +85,7 @@ def app(request):
                     quiz.save()
 
                     # Infer quiz and save
-                    json_output, external_reference = infer_quiz_json(quiz_form, uploaded_texts)
+                    json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
                     save_quiz_from_json(json_output, external_reference, quiz)
                     return redirect('quiz', pk=quiz.id)
 

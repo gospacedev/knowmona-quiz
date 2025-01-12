@@ -127,7 +127,7 @@
         {% endif %}
         <h2>What do you want to learn today?</h2>
 
-        <form method="POST" id="quizForm">
+        <form method="POST" enctype="multipart/form-data" id="quizForm">
             {% csrf_token %}
 
             <div class="col container suggestion-section pt-3 pb-5" style="margin-left: -0.8rem;">
@@ -166,7 +166,10 @@
                     placeholder="Write any topic..." required>
             </div>
 
-            <!-- Suggestions Section -->
+            <div class="mb-3">
+                <label for="files" class="form-label">Upload files (optional):</label>
+                <input type="file" class="form-control" id="files" name="files" multiple>
+            </div>
         
 
             <button type="submit" class="btn w-100 mb-2 rounded-pill" id="submitButton" style="background-color:rgb(31, 145, 97);">
@@ -177,12 +180,6 @@
                 </svg>
                 Create
             </button>
-
-            {% csrf_token %}    
-            <div class="mb-3">
-                <label for="files" class="form-label">Upload files (optional)</label>
-                <input type="file" class="form-control" id="files" name="files" multiple>
-            </div>
 
             <div class="choice-groups">
                 <!-- Difficulty Section -->
