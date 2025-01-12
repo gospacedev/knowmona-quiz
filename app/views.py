@@ -44,76 +44,59 @@ def contact(request):
 
 def app(request):
     nickname = None
-    start_time = time.time()
 
     if request.user.is_authenticated:
-        nickname = request.user.nickname
+        nickname = getattr(request.user, 'nickname', None)
+        quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
 
         if request.method == 'POST':
-            quiz_form = QuizForm(request.POST, initial={
-                                 'question_difficulty': 'Average', 'tone': 'Casual'})
+            quiz_form = QuizForm(request.POST)
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
 
-            if request.method == 'POST':
+                # Handle file uploads
                 files = request.FILES.getlist('files')
+                uploaded_texts = []
 
-            uploaded_texts = []
+                for file in files:
+                    try:
+                        uploaded_file = UploadedFile(quiz=quiz, file=file)
+                        uploaded_file.save()
+                        file_path = uploaded_file.file.path
+                        file_extension = os.path.splitext(file.name)[1].lower()
 
-            for file in files:
-                uploaded_file = UploadedFile(quiz=quiz, file=file)
-                uploaded_file.save()
-                file_path = uploaded_file.file.path
+                        # Extract content based on file type
+                        if file_extension == '.txt':
+                            with open(file_path, 'r') as f:
+                                uploaded_texts.append(f.read())
+                        elif file_extension == '.pdf':
+                            reader = PdfReader(file_path)
+                            uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                        elif file_extension == '.docx':
+                            doc = Document(file_path)
+                            uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+                    except Exception as e:
+                        messages.error(request, f"Error processing file {file.name}: {e}")
+                        continue
 
-                file_extension = os.path.splitext(file.name)[1].lower()
-
-                if file_extension == '.txt':
-                    with open(file_path, 'r') as f:
-                        uploaded_texts.append(f.read())
-
-                elif file_extension == '.pdf':
-                    reader = PdfReader(file_path)
-                    text = ''
-                    for page in reader.pages:
-                        text += page.extract_text()
-                    uploaded_texts.append(text)
-
-                elif file_extension == '.docx':
-                    doc = Document(file_path)
-                    text = ''
-                    for paragraph in doc.paragraphs:
-                        text += paragraph.text + '\n'
-                    uploaded_texts.append(text)
-
-                print(uploaded_texts)
-
-                json_output, external_reference = infer_quiz_json(quiz_form, uploaded_texts)
                 try:
+                    # Save the quiz
                     quiz.save()
-                    save_quiz_from_json(json_output, external_reference, quiz)
 
-                    new_quiz_id = quiz.id
-                    if new_quiz_id:
-                        return redirect('quiz', pk=new_quiz_id)
-                    else:
-                        messages.error(
-                            request, "Quiz ID could not be determined.")
+                    # Infer quiz and save
+                    json_output, external_reference = infer_quiz_json(quiz_form, uploaded_texts)
+                    save_quiz_from_json(json_output, external_reference, quiz)
+                    return redirect('quiz', pk=quiz.id)
 
                 except Exception as e:
                     messages.error(request, f"Error creating quiz: {e}")
+                    return redirect('app')
+
             else:
-                messages.error(
-                    request, "There was an error with your form submission.")
-        else:
-            quiz_form = QuizForm()
+                messages.error(request, "Invalid form submission.")
 
-        app_data = {
-            'quiz_form': quiz_form,
-            'nickname': nickname,
-        }
-
-        return render(request, 'app.html', app_data)
+        return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname})
     else:
         return redirect('login')
 

@@ -178,9 +178,9 @@
                 Create
             </button>
 
-
+            {% csrf_token %}    
             <div class="mb-3">
-                <label for="files" class="form-label">Upload files (optional)/label>
+                <label for="files" class="form-label">Upload files (optional)</label>
                 <input type="file" class="form-control" id="files" name="files" multiple>
             </div>
 
