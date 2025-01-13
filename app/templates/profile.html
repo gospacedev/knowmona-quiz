@@ -6,34 +6,34 @@
     {% block content %}
     <div class="col-md-6 offset-md-3">
         {% if user.is_authenticated %}
-            <h2 class="mt-5 mb-3"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona" style="display: inline; width: 86px; height: 60px;"> Your Profile</h2>
+        <h2 class="mt-5 mb-3"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona"
+                style="display: inline; width: 86px; height: 60px;"> Your Profile</h2>
 
-            <!-- Profile Update Form -->
-            <form method="POST" class="mt-4">
-                {% csrf_token %}
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        {{ form.first_name.label_tag }}
-                        {{ form.first_name }}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.last_name.label_tag }}
-                        {{ form.last_name }}
-                    </div>
-                </div>
+        <form method="POST" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.nickname.label_tag }}
+                {{ form.nickname }}
+            </div>
             
-                <div class="mb-3">
-                    {{ form.email.label_tag }}
-                    {{ form.email }}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
                 </div>
-            
-                <div class="mb-3">
-                    {{ form.nickname.label_tag }}
-                    {{ form.nickname }}
+                <div class="col-md-6">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
                 </div>
-            </form>
+            </div>
+        </form>
         {% else %}
-            <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
+        <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
         {% endif %}
     </div>
     {% endblock %}
