@@ -2,21 +2,24 @@
 
 {% load static %}
 
-
 <body>
     {% block content %}
     <div class="col-md-6 offset-md-3">
         {% if user.is_authenticated %}
+            <h4 class="welcome">
+                Hello {{ user.nickname|default:"learner" }}!
+            </h4>
+            <h4>Email: {{ user.email }}</h4>
 
-        {% if nickname %}
-        <h4 class="welcome">Hello {{ user.nickname }}!</h4>
+            <!-- Profile Update Form -->
+            <form method="POST" class="mt-4">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </form>
         {% else %}
-        <h4 class="welcome">Hello learner!</h4>
-        {% endif %}
-        <h4>Email: {{ user.email }}</h4>
+            <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
         {% endif %}
     </div>
     {% endblock %}
-
-
 </body>
