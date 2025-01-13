@@ -109,10 +109,12 @@
         </div>
     </div>
 
+    <!--
     <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
         Learn more and test your knowledge with the new feature <a href="{% url 'bites' %}" class="alert-link">Bites</a>!
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    -->
 
     <!-- Main Form Content -->
     <div class="col-md-6 offset-md-3">
@@ -130,7 +132,7 @@
         <form method="POST" enctype="multipart/form-data" id="quizForm">
             {% csrf_token %}
 
-            <div class="col container suggestion-section pt-3 pb-5" style="margin-left: -0.8rem;">
+            <div class="col container suggestion-section pt-3 pb-3" style="margin-left: -0.8rem;">
                 <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex"
                     style="border-radius: 1rem;"
                     onclick="submitSuggestion('cool facts about forests')">
@@ -166,10 +168,10 @@
                     placeholder="Write any topic..." required>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-5">
                 <label for="files" class="form-label text-muted">Upload files (optional):</label>
-                <p class="text-muted">Supported file formats: .pdf, .docx, .txt</p>
                 <input type="file" class="form-control" id="files" name="files" multiple>
+                <small class="text-muted">Supported file formats: .pdf, .docx, .txt</small>
             </div>
         
 
