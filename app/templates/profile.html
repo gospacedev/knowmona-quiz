@@ -6,6 +6,7 @@
     {% block content %}
     <div class="col-md-6 offset-md-3">
         {% if user.is_authenticated %}
+            <h2 class="mt-4"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona" style="display: inline;"> Your Profile</h2>
             <h4 class="welcome">
                 Hello {{ user.nickname|default:"learner" }}!
             </h4>
