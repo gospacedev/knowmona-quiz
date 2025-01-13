@@ -65,19 +65,20 @@ def app(request):
                     try:
                         uploaded_file = UploadedFile(quiz=quiz, file=file)
                         uploaded_file.save()
-                        file_path = uploaded_file.file.path
+
+                        file_handle = uploaded_file.file.open()
                         file_extension = os.path.splitext(file.name)[1].lower()
 
-                        # Extract content based on file type
                         if file_extension == '.txt':
-                            with open(file_path, 'r') as f:
-                                uploaded_texts.append(f.read())
+                            uploaded_texts.append(file_handle.read().decode('utf-8'))
                         elif file_extension == '.pdf':
-                            reader = PdfReader(file_path)
+                            reader = PdfReader(file_handle)
                             uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
                         elif file_extension == '.docx':
-                            doc = Document(file_path)
+                            doc = Document(file_handle)
                             uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+                        
+                        file_handle.close()
                     except Exception as e:
                         messages.error(request, f"Error processing file {file.name}: {e}")
                         continue
