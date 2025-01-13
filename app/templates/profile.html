@@ -6,17 +6,13 @@
     {% block content %}
     <div class="col-md-6 offset-md-3">
         {% if user.is_authenticated %}
-            <h2 class="mt-4"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona" style="display: inline;"> Your Profile</h2>
-            <h4 class="welcome">
-                Hello {{ user.nickname|default:"learner" }}!
-            </h4>
-            <h4>Email: {{ user.email }}</h4>
+            <h2 class="mt-5 mb-3"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona" style="display: inline; width: 86px; height: 60px;"> Your Profile</h2>
 
             <!-- Profile Update Form -->
             <form method="POST" class="mt-4">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <button type="submit" class="btn btn-secondary">Update</button>
             </form>
         {% else %}
             <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>

@@ -86,7 +86,7 @@ class SignUpLearnerUser(UserCreationForm):
 	
 class ProfileForm(forms.ModelForm):
 	email = forms.CharField(required=True, widget=forms.widgets.TextInput(attrs={"placeholder":"Email", "class":"form-control"}), label="")
-	mickname = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={"placeholder":"Nickname", "class":"form-control"}), label="")
+	mickname = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Nickname", "class":"form-control"}), label="")
 	class Meta:
 		model = LearnerUser
 		fields = ('email', 'nickname')
