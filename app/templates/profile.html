@@ -31,6 +31,8 @@
                     {{ form.last_name }}
                 </div>
             </div>
+
+            <button type="submit" class="btn btn-secondary">Update</button>
         </form>
         {% else %}
         <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
