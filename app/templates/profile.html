@@ -11,8 +11,26 @@
             <!-- Profile Update Form -->
             <form method="POST" class="mt-4">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-secondary">Update</button>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                    </div>
+                </div>
+            
+                <div class="mb-3">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                </div>
+            
+                <div class="mb-3">
+                    {{ form.nickname.label_tag }}
+                    {{ form.nickname }}
+                </div>
             </form>
         {% else %}
             <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
