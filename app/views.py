@@ -75,7 +75,8 @@ def app(request):
                     process_files_and_create_quiz.apply_async(args=[quiz.id, [file.id for file in uploaded_files], quiz_form.cleaned_data])
 
                     messages.success(request, "Your quiz is being processed in the background. You will be notified when it's ready.")
-                    return redirect('quiz', pk=quiz.id)
+                    if Quiz.objects.filter(id=quiz.id).exists():
+                        return redirect('quiz', pk=quiz.id)
 
                 except Exception as e:
                     messages.error(request, f"Error processing your quiz: {e}")
