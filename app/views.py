@@ -47,12 +47,14 @@ def about(request):
 def contact(request):
     return render(request, "contact.html")
 
+
 def app(request):
     nickname = None
 
     if request.user.is_authenticated:
         nickname = getattr(request.user, 'nickname', None)
-        quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
+        quiz_form = QuizForm(
+            initial={'question_difficulty': 'Average', 'tone': 'Casual'})
 
         if request.method == 'POST':
             quiz_form = QuizForm(request.POST)
@@ -75,13 +77,16 @@ def app(request):
                         file_extension = os.path.splitext(file.name)[1].lower()
 
                         if file_extension == '.txt':
-                            uploaded_texts.append(file_handle.read().decode('utf-8'))
+                            uploaded_texts.append(
+                                file_handle.read().decode('utf-8'))
                         elif file_extension == '.pdf':
                             reader = PdfReader(file_handle)
-                            uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                            uploaded_texts.append(
+                                ''.join(page.extract_text() for page in reader.pages))
                         elif file_extension == '.docx':
                             doc = Document(file_handle)
-                            uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+                            uploaded_texts.append(
+                                '\n'.join(p.text for p in doc.paragraphs))
 
                         file_handle.close()
                     except Exception as e:
@@ -89,7 +94,8 @@ def app(request):
                         continue
 
                 try:
-                    json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
+                    json_output, external_reference = infer_quiz_json(
+                        quiz_form, "\n".join(uploaded_texts))
                     save_quiz_from_json(json_output, external_reference, quiz)
                     return redirect('quiz', pk=quiz.id)
 
@@ -103,28 +109,6 @@ def app(request):
         return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname})
     else:
         return redirect('login')
-    
-from django.http import StreamingHttpResponse
-import time
-
-def progress(request):
-    if request.method == 'GET':
-        def stream_progress():
-            yield "data: Starting file upload processing...\n\n"
-            time.sleep(2)  # Simulate processing time
-
-            yield "data: Processing files...\n\n"
-            time.sleep(2)
-
-            yield "data: Generating quiz...\n\n"
-            time.sleep(2)
-
-            # Send the redirect instruction when done
-            yield "data: redirect:/quiz/1\n\n"
-
-        response = StreamingHttpResponse(stream_progress(), content_type='text/event-stream')
-        response['Cache-Control'] = 'no-cache'
-        return response
 
 
 def profile(request):
@@ -155,7 +139,8 @@ def bites(request):
 
 def quizzes(request):
     if request.user.is_authenticated:
-        quizzes = Quiz.objects.filter(user=request.user).order_by('-created_at')
+        quizzes = Quiz.objects.filter(
+            user=request.user).order_by('-created_at')
 
         quiz_list = {
             'quizzes': quizzes,

@@ -272,10 +272,6 @@
             </div>
         </form>
 
-        <div id="progress-container" style="display: none; margin-top: 20px;">
-            <pre id="progress-output" style="background: #1e2020; padding: 10px; border: 1px solid #1e2020;"></pre>
-        </div>
-
         {% else %}
         <p>You are currently logged out, you can <a href="{% url 'signup' %}">sign up</a> or <a
                 href="{% url 'login' %}">login</a></p>
@@ -283,39 +279,6 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.getElementById("quizForm");
-            const progressContainer = document.getElementById("progress-container");
-            const progressOutput = document.getElementById("progress-output");
-
-            form.addEventListener("submit", function (event) {
-                event.preventDefault(); // Prevent normal form submission
-
-                // Show the progress container
-                progressContainer.style.display = "block";
-                progressOutput.textContent = "Processing...\n";
-
-                // Open the streaming connection
-                const eventSource = new EventSource("{% url 'progress' %}");
-
-                eventSource.onmessage = function (event) {
-                    // Display progress updates
-                    progressOutput.textContent += event.data + "\n";
-
-                    // Check if there's a redirect instruction
-                    if (event.data.startsWith("redirect:")) {
-                        const redirectUrl = event.data.split("redirect:")[1]; // Extract URL
-                        window.location.href = redirectUrl; // Redirect to the quiz page
-                    }
-                };
-
-                eventSource.onerror = function () {
-                    progressOutput.textContent += "\nAn error occurred. Please try again.";
-                    eventSource.close();
-                };
-            });
-        });
-
         function selectCard(cardElement, value) {
             const name = cardElement.querySelector('input[type="radio"]').name;
             document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
