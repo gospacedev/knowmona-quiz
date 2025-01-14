@@ -47,9 +47,6 @@ def about(request):
 def contact(request):
     return render(request, "contact.html")
 
-from django.http import StreamingHttpResponse
-from time import sleep
-
 def app(request):
     nickname = None
 
@@ -62,50 +59,43 @@ def app(request):
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
+
                 quiz.save()
 
+                # Handle file uploads
                 files = request.FILES.getlist('files')
                 uploaded_texts = []
 
-                def process_files():
-                    yield "Starting file upload processing...\n"
-                    for file in files:
-                        try:
-                            uploaded_file = UploadedFile(quiz=quiz, file=file)
-                            uploaded_file.save()
-
-                            file_handle = uploaded_file.file.open()
-                            file_extension = os.path.splitext(file.name)[1].lower()
-
-                            if file_extension == '.txt':
-                                uploaded_texts.append(file_handle.read().decode('utf-8'))
-                            elif file_extension == '.pdf':
-                                reader = PdfReader(file_handle)
-                                uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
-                            elif file_extension == '.docx':
-                                doc = Document(file_handle)
-                                uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
-
-                            file_handle.close()
-                            yield f"Successfully processed {file.name}\n"
-                        except Exception as e:
-                            yield f"Error processing file {file.name}: {e}\n"
-                            continue
-
+                for file in files:
                     try:
-                        yield "Generating quiz...\n"
-                        json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
-                        save_quiz_from_json(json_output, external_reference, quiz)
-                        yield "Quiz created successfully. Redirecting...\n"
-                        # Return a JavaScript redirect to simulate the actual redirect
-                        yield '<script>window.location.href = "/quiz/{}";</script>'.format(quiz.id)
-                    except Exception as e:
-                        yield f"Error creating quiz: {e}\n"
+                        uploaded_file = UploadedFile(quiz=quiz, file=file)
+                        uploaded_file.save()
 
-                # Use StreamingHttpResponse to send updates
-                response = StreamingHttpResponse(process_files(), content_type='text/event-stream')
-                response['Cache-Control'] = 'no-cache'
-                return response
+                        file_handle = uploaded_file.file.open()
+                        file_extension = os.path.splitext(file.name)[1].lower()
+
+                        if file_extension == '.txt':
+                            uploaded_texts.append(file_handle.read().decode('utf-8'))
+                        elif file_extension == '.pdf':
+                            reader = PdfReader(file_handle)
+                            uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                        elif file_extension == '.docx':
+                            doc = Document(file_handle)
+                            uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+
+                        file_handle.close()
+                    except Exception as e:
+                        messages.error(request, f"Error processing file {file.name}: {e}")
+                        continue
+
+                try:
+                    json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
+                    save_quiz_from_json(json_output, external_reference, quiz)
+                    return redirect('quiz', pk=quiz.id)
+
+                except Exception as e:
+                    messages.error(request, f"Error creating quiz: {e}")
+                    return redirect('app')
 
             else:
                 messages.error(request, "Invalid form submission.")
@@ -113,6 +103,28 @@ def app(request):
         return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname})
     else:
         return redirect('login')
+    
+from django.http import StreamingHttpResponse
+import time
+
+def progress(request):
+    if request.method == 'GET':
+        def stream_progress():
+            yield "data: Starting file upload processing...\n\n"
+            time.sleep(2)  # Simulate processing time
+
+            yield "data: Processing files...\n\n"
+            time.sleep(2)
+
+            yield "data: Generating quiz...\n\n"
+            time.sleep(2)
+
+            # Send the redirect instruction when done
+            yield "data: redirect:/quiz/1\n\n"
+
+        response = StreamingHttpResponse(stream_progress(), content_type='text/event-stream')
+        response['Cache-Control'] = 'no-cache'
+        return response
 
 
 def profile(request):
