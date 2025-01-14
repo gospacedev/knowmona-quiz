@@ -12,7 +12,7 @@
     }
 
     .radio-card:hover {
-        transform: scale(1.02);  
+        transform: scale(1.02);
     }
 
     .radio-card.selected {
@@ -133,35 +133,38 @@
             {% csrf_token %}
 
             <div class="col container suggestion-section pt-3 pb-3" style="margin-left: -0.8rem;">
-                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex"
-                    style="border-radius: 1rem;"
+                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex" style="border-radius: 1rem;"
                     onclick="submitSuggestion('cool facts about forests')">
                     <div class="card-body">
-                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-tree" viewBox="0 0 16 16">
-                            <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5H11a.5.5 0 0 0 .416-.777zM6.437 4.758A.5.5 0 0 0 6 4.5h-.066L8 1.401 10.066 4.5H10a.5.5 0 0 0-.424.765L11.598 8.5H11.5a.5.5 0 0 0-.447.724L12.69 12.5H3.309l1.638-3.276A.5.5 0 0 0 4.5 8.5h-.098l2.022-3.235a.5.5 0 0 0 .013-.507"/>
-                          </svg> cool facts about forests</p>
+                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                fill="currentColor" class="bi bi-tree" viewBox="0 0 16 16">
+                                <path
+                                    d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5H11a.5.5 0 0 0 .416-.777zM6.437 4.758A.5.5 0 0 0 6 4.5h-.066L8 1.401 10.066 4.5H10a.5.5 0 0 0-.424.765L11.598 8.5H11.5a.5.5 0 0 0-.447.724L12.69 12.5H3.309l1.638-3.276A.5.5 0 0 0 4.5 8.5h-.098l2.022-3.235a.5.5 0 0 0 .013-.507" />
+                            </svg> cool facts about forests</p>
                     </div>
                 </div>
-                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex"
-                    style="border-radius: 1rem;"
+                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex" style="border-radius: 1rem;"
                     onclick="submitSuggestion('effects of inflation in the economy')">
                     <div class="card-body">
-                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-graph-up-arrow" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5"/>
-                          </svg> effects of inflation in the economy</p>
+                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                fill="currentColor" class="bi bi-graph-up-arrow" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5" />
+                            </svg> effects of inflation in the economy</p>
                     </div>
                 </div>
-                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex"
-                    style="border-radius: 1rem;"
+                <div class="card suggestion-card mx-1 my-1 pb-4 col-lg-4 d-flex" style="border-radius: 1rem;"
                     onclick="submitSuggestion('planets in our solar system')">
                     <div class="card-body">
-                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
-                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
-                          </svg> planets in our solar system</p>
+                        <p class="card-title text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                                <path
+                                    d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z" />
+                            </svg> planets in our solar system</p>
                     </div>
                 </div>
             </div>
-            
+
 
             <div class="mb-3">
                 <input type="text" name="topic" id="topicInput" class="form-control rounded-pill"
@@ -173,9 +176,10 @@
                 <input type="file" class="form-control rounded-pill text-muted" id="files" name="files" multiple>
                 <small class="text-muted">Supported file formats: .pdf, .docx, .txt</small>
             </div>
-        
 
-            <button type="submit" class="btn w-100 mb-2 rounded-pill" id="submitButton" style="background-color:rgb(31, 145, 97);">
+
+            <button type="submit" class="btn w-100 mb-2 rounded-pill" id="submitButton"
+                style="background-color:rgb(31, 145, 97);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                     class="bi bi-send-fill me-2" viewBox="0 0 16 16">
                     <path
@@ -268,6 +272,10 @@
             </div>
         </form>
 
+        <div id="progress-container" style="display: none; margin-top: 20px;">
+            <pre id="progress-output" style="background: #f8f9fa; padding: 10px; border: 1px solid #ddd;"></pre>
+        </div>
+
         {% else %}
         <p>You are currently logged out, you can <a href="{% url 'signup' %}">sign up</a> or <a
                 href="{% url 'login' %}">login</a></p>
@@ -318,12 +326,39 @@
             showLoading();
         });
 
-        // Initialize cards based on any pre-selected values
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
-                radio.closest('.radio-card').classList.add('selected');
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const progressContainer = document.getElementById("progress-container");
+            const progressOutput = document.getElementById("progress-output");
+
+            form.addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent normal form submission
+                progressContainer.style.display = "block";
+                progressOutput.textContent = "Processing...\n";
+
+                const formData = new FormData(form);
+
+                // Open a connection to the server
+                const eventSource = new EventSource("{% url 'app' %}");
+
+                eventSource.onmessage = function (event) {
+                    // Append the new message to the progress output
+                    progressOutput.textContent += event.data + "\n";
+
+                    // Check if there's a redirect instruction
+                    if (event.data.startsWith("redirect:")) {
+                        const redirectUrl = event.data.split("redirect:")[1]; // Extract URL
+                        window.location.href = redirectUrl; // Redirect to the quiz page
+                    }
+                };
+
+                eventSource.onerror = function () {
+                    progressOutput.textContent += "\nError occurred. Please try again.";
+                    eventSource.close();
+                };
             });
         });
+
     </script>
 
     {% endblock %}

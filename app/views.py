@@ -103,9 +103,8 @@ def app(request):
                         yield f"Error creating quiz: {e}\n"
 
                 # Use StreamingHttpResponse to send updates
-                response = StreamingHttpResponse(process_files(), content_type='text/plain')
+                response = StreamingHttpResponse(process_files(), content_type='text/event-stream')
                 response['Cache-Control'] = 'no-cache'
-                response['Connection'] = 'keep-alive'
                 return response
 
             else:
