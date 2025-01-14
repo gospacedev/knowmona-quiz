@@ -13,8 +13,7 @@ from django.contrib.auth import login
 from django.shortcuts import render, redirect
 from dotenv import load_dotenv
 import time
-from PyPDF2 import PdfReader
-from docx import Document
+
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -24,6 +23,8 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 
 from .tokens import account_activation_token
+
+from .tasks import process_files_and_create_quiz
 
 load_dotenv()
 
@@ -54,42 +55,30 @@ def app(request):
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
-
                 quiz.save()
 
                 # Handle file uploads
                 files = request.FILES.getlist('files')
-                uploaded_texts = []
+                uploaded_files = []  # To store references to the uploaded files in the database
 
+                # Save files to the database
                 for file in files:
                     try:
                         uploaded_file = UploadedFile(quiz=quiz, file=file)
-                        uploaded_file.save()
-
-                        file_handle = uploaded_file.file.open()
-                        file_extension = os.path.splitext(file.name)[1].lower()
-
-                        if file_extension == '.txt':
-                            uploaded_texts.append(file_handle.read().decode('utf-8'))
-                        elif file_extension == '.pdf':
-                            reader = PdfReader(file_handle)
-                            uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
-                        elif file_extension == '.docx':
-                            doc = Document(file_handle)
-                            uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
-                        
-                        file_handle.close()
+                        uploaded_file.save()  # This saves the file and its reference in the DB
+                        uploaded_files.append(uploaded_file)  # Add the file reference to the list
                     except Exception as e:
                         messages.error(request, f"Error processing file {file.name}: {e}")
                         continue
 
                 try:
-                    json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
-                    save_quiz_from_json(json_output, external_reference, quiz)
+                    process_files_and_create_quiz.apply_async(args=[quiz.id, [file.id for file in uploaded_files], quiz_form.cleaned_data])
+
+                    messages.success(request, "Your quiz is being processed in the background. You will be notified when it's ready.")
                     return redirect('quiz', pk=quiz.id)
 
                 except Exception as e:
-                    messages.error(request, f"Error creating quiz: {e}")
+                    messages.error(request, f"Error processing your quiz: {e}")
                     return redirect('app')
 
             else:
