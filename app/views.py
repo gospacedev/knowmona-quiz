@@ -1,4 +1,6 @@
+from PyPDF2 import PdfReader
 from django.shortcuts import render
+from docx import Document
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from django.views.decorators.csrf import csrf_exempt
@@ -24,8 +26,6 @@ from django.contrib.auth import get_user_model
 
 from .tokens import account_activation_token
 
-from .tasks import process_files_and_create_quiz
-
 load_dotenv()
 
 
@@ -48,38 +48,56 @@ def app(request):
 
     if request.user.is_authenticated:
         nickname = getattr(request.user, 'nickname', None)
-        quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
+        quiz_form = QuizForm(
+            initial={'question_difficulty': 'Average', 'tone': 'Casual'})
 
         if request.method == 'POST':
             quiz_form = QuizForm(request.POST)
             if quiz_form.is_valid():
                 quiz = quiz_form.save(commit=False)
                 quiz.user = request.user
+
                 quiz.save()
 
                 # Handle file uploads
                 files = request.FILES.getlist('files')
-                uploaded_files = []  # To store references to the uploaded files in the database
+                uploaded_texts = []
 
-                # Save files to the database
-                for file in files:
-                    try:
-                        uploaded_file = UploadedFile(quiz=quiz, file=file)
-                        uploaded_file.save()  # This saves the file and its reference in the DB
-                        uploaded_files.append(uploaded_file)  # Add the file reference to the list
-                    except Exception as e:
-                        messages.error(request, f"Error processing file {file.name}: {e}")
-                        continue
+                if files:
+                    for file in files:
+                        try:
+                            uploaded_file = UploadedFile(quiz=quiz, file=file)
+                            uploaded_file.save()
+
+                            file_handle = uploaded_file.file.open()
+                            file_extension = os.path.splitext(file.name)[
+                                1].lower()
+
+                            if file_extension == '.txt':
+                                uploaded_texts.append(
+                                    file_handle.read().decode('utf-8'))
+                            elif file_extension == '.pdf':
+                                reader = PdfReader(file_handle)
+                                uploaded_texts.append(
+                                    ''.join(page.extract_text() for page in reader.pages))
+                            elif file_extension == '.docx':
+                                doc = Document(file_handle)
+                                uploaded_texts.append(
+                                    '\n'.join(p.text for p in doc.paragraphs))
+
+                            file_handle.close()
+                        except Exception as e:
+                            messages.error(request, f"Error processing file {file.name}: {e}")
+                            continue
 
                 try:
-                    process_files_and_create_quiz.apply_async(args=[quiz.id, [file.id for file in uploaded_files], quiz_form.cleaned_data])
-
-                    messages.success(request, "Your quiz is being processed in the background. You will be notified when it's ready.")
-                    if Quiz.objects.filter(id=quiz.id).exists():
-                        return redirect('quiz', pk=quiz.id)
+                    json_output, external_reference = infer_quiz_json(
+                        quiz_form, "\n".join(uploaded_texts))
+                    save_quiz_from_json(json_output, external_reference, quiz)
+                    return redirect('quiz', pk=quiz.id)
 
                 except Exception as e:
-                    messages.error(request, f"Error processing your quiz: {e}")
+                    messages.error(request, f"Error creating quiz: {e}")
                     return redirect('app')
 
             else:
