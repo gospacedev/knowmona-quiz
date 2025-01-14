@@ -52,6 +52,8 @@ def infer_quiz_json(form, uploaded_texts=""):
 
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            temperature=0.3,
+            repetition_penalty=1,
             messages=[{"role": "system", "content": instructions_prompt}],
             response_format={
                 "type": "json_object",
@@ -72,6 +74,9 @@ def infer_quiz_json(form, uploaded_texts=""):
 
 
 def save_quiz_from_json(quiz_data, external_reference, quiz):
+    questions_to_create = []
+    explanations_to_create = []
+    choices_to_create = []
 
     for question_num in range(1, 11):
         question_key = f"Q{question_num}"
@@ -80,20 +85,25 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
         if not question_data:
             continue
 
-        question = Question.objects.create(
+        # Prepare question for bulk creation
+        question = Question(
             quiz=quiz,
             text=question_data["question"]
         )
+        questions_to_create.append(question)
 
-        explanation = Explanation.objects.create(
-            question=question,
+        # Prepare explanation for bulk creation
+        explanation = Explanation(
+            question=question,  # Note: Explanation is tied to Question
             text=question_data["explanation"]
         )
+        explanations_to_create.append(explanation)
 
         correct_answer = question_data.get("answer")
         if not correct_answer:
             continue  # Skip if no answer is found
 
+        # Prepare choices for bulk creation
         choice_keys = [f"choice_{i}" for i in range(1, 5)]
         for choice_key in choice_keys:
             choice_text = question_data.get(choice_key)
@@ -101,13 +111,27 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
                 continue
 
             is_correct = (choice_key == correct_answer)
-
-            Choice.objects.create(
-                question=question,
-                text=choice_text,
-                is_correct=is_correct
+            choices_to_create.append(
+                Choice(
+                    question=question,
+                    text=choice_text,
+                    is_correct=is_correct
+                )
             )
 
+    # Bulk create all questions, explanations, and choices
+    if questions_to_create:
+        Question.objects.bulk_create(questions_to_create)
+    
+    # Bulk create all explanations
+    if explanations_to_create:
+        Explanation.objects.bulk_create(explanations_to_create)
+
+    # Bulk create all choices
+    if choices_to_create:
+        Choice.objects.bulk_create(choices_to_create)
+
+    # Create the reference object
     Reference.objects.create(
         quiz=quiz,
         text=external_reference
