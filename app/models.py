@@ -53,6 +53,14 @@ class Quiz(models.Model):
         "academic": "Academic",
     }
 
+    STATUS_CHOICES = [
+        ('processing', 'Processing'),
+        ('complete', 'Complete'),
+        ('error', 'Error'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
+
     topic = models.CharField(max_length=1000)
     question_difficulty = models.CharField(
         max_length=12, choices=QUESTION_DIFFICULTY_CHOICES, default="average")

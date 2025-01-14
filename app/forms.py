@@ -16,6 +16,16 @@ class QuizForm(forms.ModelForm):
 		"academic": "Academic",
 	}
 
+	file = forms.FileField(
+        widget=forms.FileInput(attrs={
+            'multiple': False,
+            'class': 'form-control',
+            'accept': '.txt,.pdf,.docx'
+        }),
+        required=False
+    )
+    
+
 	topic = forms.CharField(required=True, widget=forms.widgets.TextInput(attrs={"placeholder":"Enter any topic", "class":"form-control"}), label="")
 	question_difficulty = forms.ChoiceField(choices=QUESTION_DIFFICULTY_CHOICES, widget=forms.RadioSelect(), initial={'average': 'Average'})
 	tone = forms.ChoiceField(choices=TONE_CHOICES, widget=forms.RadioSelect(), initial={'casual': 'Casual'})

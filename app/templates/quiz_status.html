@@ -1,11 +1,73 @@
-{% if processing %}
-    <h2>Processing your quiz...</h2>
-    <p>This may take a few minutes. The page will refresh automatically.</p>
-    <script>
-        setTimeout(function() {
-            window.location.reload();
-        }, 5000);
-    </script>
-{% else %}
-    <h2>Redirecting to your quiz...</h2>
-{% endif %}
+<!-- templates/quiz_status.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="status-container">
+    <h2>Processing Your Quiz</h2>
+    <div id="status-message">Starting process...</div>
+    <div class="progress-indicator">
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let checkStatus = function() {
+        fetch('/quiz/{{ quiz.id }}/check_status/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status-message').textContent = data.message;
+                
+                if (data.status === 'complete') {
+                    window.location.href = data.redirect_url;
+                } else if (data.status === 'error') {
+                    document.getElementById('status-message').className = 'error';
+                    // Stop polling on error
+                    clearInterval(pollInterval);
+                }
+            })
+            .catch(error => {
+                document.getElementById('status-message').textContent = 'Error checking status. Will retry...';
+                console.error('Error:', error);
+            });
+    };
+
+    // Poll every 3 seconds
+    let pollInterval = setInterval(checkStatus, 3000);
+    
+    // Initial check
+    checkStatus();
+});
+</script>
+
+<style>
+.status-container {
+    text-align: center;
+    padding: 2rem;
+}
+
+.progress-indicator {
+    margin: 2rem auto;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
