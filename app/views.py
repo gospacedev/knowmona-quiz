@@ -47,127 +47,73 @@ def about(request):
 def contact(request):
     return render(request, "contact.html")
 
+from django.http import StreamingHttpResponse
+from time import sleep
 
 def app(request):
-    if not request.user.is_authenticated:
+    nickname = None
+
+    if request.user.is_authenticated:
+        nickname = getattr(request.user, 'nickname', None)
+        quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
+
+        if request.method == 'POST':
+            quiz_form = QuizForm(request.POST)
+            if quiz_form.is_valid():
+                quiz = quiz_form.save(commit=False)
+                quiz.user = request.user
+                quiz.save()
+
+                files = request.FILES.getlist('files')
+                uploaded_texts = []
+
+                def process_files():
+                    yield "Starting file upload processing...\n"
+                    for file in files:
+                        try:
+                            uploaded_file = UploadedFile(quiz=quiz, file=file)
+                            uploaded_file.save()
+
+                            file_handle = uploaded_file.file.open()
+                            file_extension = os.path.splitext(file.name)[1].lower()
+
+                            if file_extension == '.txt':
+                                uploaded_texts.append(file_handle.read().decode('utf-8'))
+                            elif file_extension == '.pdf':
+                                reader = PdfReader(file_handle)
+                                uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                            elif file_extension == '.docx':
+                                doc = Document(file_handle)
+                                uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+
+                            file_handle.close()
+                            yield f"Successfully processed {file.name}\n"
+                        except Exception as e:
+                            yield f"Error processing file {file.name}: {e}\n"
+                            continue
+
+                    try:
+                        yield "Generating quiz...\n"
+                        json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
+                        save_quiz_from_json(json_output, external_reference, quiz)
+                        yield "Quiz created successfully. Redirecting...\n"
+                        # Return a JavaScript redirect to simulate the actual redirect
+                        yield '<script>window.location.href = "/quiz/{}";</script>'.format(quiz.id)
+                    except Exception as e:
+                        yield f"Error creating quiz: {e}\n"
+
+                # Use StreamingHttpResponse to send updates
+                response = StreamingHttpResponse(process_files(), content_type='text/plain')
+                response['Cache-Control'] = 'no-cache'
+                response['Connection'] = 'keep-alive'
+                return response
+
+            else:
+                messages.error(request, "Invalid form submission.")
+
+        return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname})
+    else:
         return redirect('login')
-    
-    nickname = getattr(request.user, 'nickname', None)
-    quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
-
-    if request.method == 'POST':
-        quiz_form = QuizForm(request.POST, request.FILES)
-        if quiz_form.is_valid():
-            quiz = quiz_form.save(commit=False)
-            quiz.user = request.user
-            quiz.status = 'processing'
-            quiz.save()
-
-            # Handle file uploads
-            files = request.FILES.getlist('files')  # This is the key change
-            file_tasks = []
-            
-            for file in files:
-                uploaded_file = UploadedFile(quiz=quiz, file=file)
-                uploaded_file.save()
-                
-                # Start async task for file processing
-                task = process_uploaded_file.delay(uploaded_file.id)  # Changed to pass file_id
-                file_tasks.append(task.id)
-
-            # Store task IDs and form data in session
-            request.session[f'quiz_{quiz.id}_tasks'] = file_tasks
-            request.session[f'quiz_{quiz.id}_form_data'] = {
-                'question_difficulty': quiz.question_difficulty,
-                'tone': quiz.tone
-            }
-            
-            return redirect('quiz_status', quiz_id=quiz.id)
-        else:
-            messages.error(request, "Invalid form submission.")
-
-    return render(request, 'app.html', {
-        'quiz_form': quiz_form,
-        'nickname': nickname
-    })
-
-def check_quiz_status(request, quiz_id):
-    """AJAX endpoint to check processing status"""
-    quiz = get_object_or_404(Quiz, id=quiz_id)
-    
-    # Get task IDs and form data from session
-    file_tasks = request.session.get(f'quiz_{quiz_id}_tasks', [])
-    form_data = request.session.get(f'quiz_{quiz_id}_form_data', {})
-    
-    if not form_data:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Form data not found in session'
-        })
-    
-    # Check file processing tasks
-    all_results = []
-    all_complete = True
-    
-    for task_id in file_tasks:
-        result = AsyncResult(task_id)
-        if result.ready():
-            if result.successful():
-                all_results.append(result.get())
-            else:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': f"Error processing file: {result.result}"
-                })
-        else:
-            all_complete = False
-            return JsonResponse({
-                'status': 'processing',
-                'message': 'Processing files...'
-            })
-
-    # If files are processed, check quiz creation
-    if all_complete:
-        creation_task_id = request.session.get(f'quiz_{quiz_id}_creation_task')
-        
-        # Start quiz creation if not started
-        if not creation_task_id:
-            combined_text = "\n".join(all_results)
-            task = create_quiz.delay(quiz_id, form_data, combined_text)
-            request.session[f'quiz_{quiz_id}_creation_task'] = task.id
-            return JsonResponse({
-                'status': 'processing',
-                'message': 'Creating quiz...'
-            })
-        
-        # Check quiz creation status
-        result = AsyncResult(creation_task_id)
-        if result.ready():
-            if result.successful():
-                # Clean up session
-                del request.session[f'quiz_{quiz_id}_tasks']
-                del request.session[f'quiz_{quiz_id}_form_data']
-                del request.session[f'quiz_{quiz_id}_creation_task']
-                return JsonResponse({
-                    'status': 'complete',
-                    'redirect_url': reverse('quiz', kwargs={'pk': result.get()})
-                })
-            else:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': f"Error creating quiz: {result.result}"
-                })
-        
-        return JsonResponse({
-            'status': 'processing',
-            'message': 'Creating quiz...'
-        })
-
-def quiz_status(request, quiz_id):
-    """Render the status page that will poll for updates"""
-    quiz = get_object_or_404(Quiz, id=quiz_id)
-    return render(request, 'quiz_status.html', {'quiz': quiz})
-
 
 
 def profile(request):

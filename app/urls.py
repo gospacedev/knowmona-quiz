@@ -19,6 +19,4 @@ urlpatterns = [
     path('auth-receiver', views.auth_receiver, name='auth_receiver'),
     path('sign-out', views.sign_out, name='sign_out'),
     path('activate/<uidb64>/<token>', views.activate, name='activate'),
-    path('quiz/<int:quiz_id>/status/', views.quiz_status, name='quiz_status'),
-    path('quiz/<int:quiz_id>/check_status/', views.check_quiz_status, name='check_quiz_status'),
 ] 
