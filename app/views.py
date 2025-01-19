@@ -63,7 +63,7 @@ def app(request):
 
                 for file in files:
                     try:
-                        uploaded_file = UploadedFile(quiz=quiz, user=request.user, file=file)
+                        uploaded_file = UploadedFile(quiz=quiz, file=file)
                         uploaded_file.save()
 
                         file_handle = uploaded_file.file.open()
@@ -249,7 +249,6 @@ def login_user(request):
         user = authenticate(request, username=useremail, password=password)
         if user is not None:
             login(request, user)
-            messages.success(request, "You have been successfully logged in!")
             return redirect("app")
         else:
             messages.warning(
