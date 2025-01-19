@@ -101,4 +101,4 @@ class ProfileForm(forms.ModelForm):
 	last_name = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Last name", "class":"form-control"}), label="")
 	class Meta:
 		model = LearnerUser
-		fields = ('email', 'nickname')
+		fields = ('email', 'nickname', 'first_name', 'last_name')
