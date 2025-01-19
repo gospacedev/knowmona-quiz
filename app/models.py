@@ -107,6 +107,7 @@ class Reference(models.Model):
 
 class UploadedFile(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="uploaded_files")
+    user = models.ForeignKey(LearnerUser, on_delete=models.CASCADE, null=True)
     file = models.FileField(upload_to='uploaded_files/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

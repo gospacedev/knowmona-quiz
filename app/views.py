@@ -63,7 +63,7 @@ def app(request):
 
                 for file in files:
                     try:
-                        uploaded_file = UploadedFile(quiz=quiz, file=file)
+                        uploaded_file = UploadedFile(quiz=quiz, user=request.user, file=file)
                         uploaded_file.save()
 
                         file_handle = uploaded_file.file.open()
