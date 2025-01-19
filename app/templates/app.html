@@ -93,6 +93,15 @@
     .suggestion-card:hover {
         transform: scale(1.02);
     }
+
+    .xp-display {
+        padding: 0.75rem;
+        background-color: #212529;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin: 1rem;
+        color: white;
+    }
 </style>
 </head>
 
@@ -106,6 +115,13 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
             <div class="spinner-text">Generating your quiz... 😊</div>
+        </div>
+    </div>
+
+    <div class="xp-display">
+        <div class="d-flex align-items-center">
+            <span class="me-2">Total XP:</span>
+            <span>{{ user_xp }}</span>
         </div>
     </div>
 

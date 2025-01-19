@@ -99,7 +99,7 @@ def app(request):
             else:
                 messages.error(request, "Invalid form submission.")
 
-        return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname})
+        return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname, 'user_xp': request.user.experience_points})
     else:
         return redirect('login')
 
