@@ -263,24 +263,102 @@
             </div>
 
             <script type="text/javascript">
-
-                document.addEventListener('DOMContentLoaded', function () {
+                document.addEventListener('DOMContentLoaded', function() {
                     let currentQuestion = 1;
-                    let totalQuestions = 10;
+                    let totalQuestions = 0;
                     let correctAnswers = 0;
-
+                    let totalXP = 0;
+                    
+                    const CORRECT_ANSWER_XP = 10;
+                    const WRONG_ANSWER_XP = 7;
+                    const QUIZ_COMPLETION_XP = 20;
+                
+                    // Add XP display HTML
+                    const xpDisplayHTML = `
+                        <div class="xp-display position-fixed top-0 end-0 m-3 p-3 bg-dark rounded shadow">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">XP:</span>
+                                <span id="current-xp">${totalXP}</span>
+                            </div>
+                        </div>
+                    `;
+                    document.querySelector('.quiz-header').insertAdjacentHTML('afterend', xpDisplayHTML);
+                
+                    // Add CSS for XP animation
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .xp-gain-animation {
+                            position: absolute;
+                            right: 100%;
+                            color: #00ff00;
+                            animation: xpFloat 1s ease-out forwards;
+                            margin-right: 10px;
+                        }
+                
+                        @keyframes xpFloat {
+                            0% {
+                                opacity: 1;
+                                transform: translateY(0);
+                            }
+                            100% {
+                                opacity: 0;
+                                transform: translateY(-20px);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                
+                    async function saveXP(xpAmount) {
+                        try {
+                            const response = await fetch(window.location.href, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({
+                                    xp_amount: xpAmount
+                                })
+                            });
+                            
+                            if (!response.ok) throw new Error('Failed to save XP');
+                            
+                            const data = await response.json();
+                            if (data.status === 'success') {
+                                updateXPDisplay(xpAmount);
+                            }
+                        } catch (error) {
+                            console.error('Error saving XP:', error);
+                        }
+                    }
+                
+                    function updateXPDisplay(xpGained) {
+                        const xpDisplay = document.getElementById('current-xp');
+                        totalXP += xpGained;
+                        xpDisplay.textContent = totalXP;
+                        
+                        // Show XP gain animation
+                        const xpGainElement = document.createElement('div');
+                        xpGainElement.className = 'xp-gain-animation';
+                        xpGainElement.textContent = `+${xpGained} XP`;
+                        document.querySelector('.xp-display').appendChild(xpGainElement);
+                        
+                        setTimeout(() => xpGainElement.remove(), 1000);
+                    }
+                
                     function updateProgressBar() {
                         const progress = (currentQuestion / totalQuestions) * 100;
                         const progressBar = document.querySelector('.progress-bar');
                         progressBar.style.width = `${progress}%`;
                         progressBar.setAttribute('aria-valuenow', progress);
                     }
-
+                
                     document.querySelectorAll('.choice-card').forEach(card => {
                         const radio = card.querySelector('input[type="radio"]');
                         const label = card.querySelector('label');
-
-                        card.addEventListener('click', function (e) {
+                
+                        card.addEventListener('click', function(e) {
                             const questionContainer = this.closest('.question-container');
                             questionContainer.querySelectorAll('.choice-card').forEach(c => {
                                 c.classList.remove('selected');
@@ -289,8 +367,8 @@
                             radio.checked = true;
                             e.stopPropagation();
                         });
-
-                        label.addEventListener('click', function (e) {
+                
+                        label.addEventListener('click', function(e) {
                             const card = this.closest('.choice-card');
                             const questionContainer = card.closest('.question-container');
                             questionContainer.querySelectorAll('.choice-card').forEach(c => {
@@ -300,27 +378,19 @@
                             radio.checked = true;
                             e.stopPropagation();
                         });
-
-                        radio.addEventListener('change', function () {
-                            const questionContainer = this.closest('.question-container');
-                            questionContainer.querySelectorAll('.choice-card').forEach(c => {
-                                c.classList.remove('selected');
-                            });
-                            this.closest('.choice-card').classList.add('selected');
-                        });
                     });
-
+                
                     function showQuestion(questionNumber) {
                         const currentQuestionEl = document.querySelector(`#question-${questionNumber - 1}`);
                         const nextQuestionEl = document.querySelector(`#question-${questionNumber}`);
-
+                        
                         if (currentQuestionEl) {
                             currentQuestionEl.classList.add('slide-out');
                             setTimeout(() => {
                                 currentQuestionEl.style.display = 'none';
                             }, 500);
                         }
-
+                
                         if (nextQuestionEl) {
                             setTimeout(() => {
                                 nextQuestionEl.style.transform = 'translateX(100%)';
@@ -331,12 +401,12 @@
                                 }, 50);
                             }, currentQuestionEl ? 500 : 0);
                         }
-
+                
                         updateProgressBar();
                     }
-
+                
                     document.querySelectorAll('.check-answer').forEach(button => {
-                        button.addEventListener('click', function () {
+                        button.addEventListener('click', async function() {
                             const questionContainer = this.closest('.question-container');
                             const selectedRadio = questionContainer.querySelector('input[type="radio"]:checked');
                             const feedbackDiv = questionContainer.querySelector('.feedback');
@@ -344,180 +414,63 @@
                             const nextButton = questionContainer.querySelector('.next-btn');
                             const finishButton = questionContainer.querySelector('.finish-btn');
                             const currentQuestionExplanation = feedbackDiv.querySelector('input[id="currentQuestionExplanation"]').value;
-
-
-                            questionContainer.querySelectorAll('.choice-card').forEach(card => {
-                                card.classList.remove('correct-answer', 'incorrect-answer');
-                            });
-
+                
                             if (!selectedRadio) {
                                 feedbackDiv.style.display = 'block';
                                 feedbackAlert.className = 'alert alert-warning';
                                 feedbackAlert.textContent = 'Please select an answer!';
                                 return;
                             }
-
+                
+                            questionContainer.querySelectorAll('.choice-card').forEach(card => {
+                                card.classList.remove('correct-answer', 'incorrect-answer');
+                            });
+                
                             const isCorrect = selectedRadio.dataset.correct === 'true';
                             feedbackDiv.style.display = 'block';
-
+                
                             if (isCorrect) {
-                                feedbackAlert.className = 'alert alert-success text-light';
+                                feedbackAlert.className = 'alert alert-success text-white';
                                 feedbackAlert.textContent = currentQuestionExplanation;
                                 selectedRadio.closest('.choice-card').classList.add('correct-answer');
                                 correctAnswers++;
+                                await saveXP(CORRECT_ANSWER_XP);
                             } else {
-                                feedbackAlert.className = 'alert alert-danger text-light';
+                                feedbackAlert.className = 'alert alert-danger text-white';
                                 selectedRadio.closest('.choice-card').classList.add('incorrect-answer');
                                 const correctChoice = questionContainer.querySelector('input[data-correct="true"]');
                                 correctChoice.closest('.choice-card').classList.add('correct-answer');
                                 feedbackAlert.textContent = currentQuestionExplanation;
+                                await saveXP(WRONG_ANSWER_XP);
                             }
-
+                
                             if (nextButton) nextButton.style.display = 'inline-block';
                             if (finishButton) finishButton.style.display = 'inline-block';
                             this.style.display = 'none';
                         });
                     });
-
+                
                     document.querySelectorAll('.next-btn').forEach(button => {
-                        button.addEventListener('click', function () {
+                        button.addEventListener('click', function() {
                             currentQuestion++;
                             showQuestion(currentQuestion);
                         });
                     });
-
+                
                     const finishBtn = document.querySelector('.finish-btn');
                     if (finishBtn) {
-                        finishBtn.addEventListener('click', function (e) {
+                        finishBtn.addEventListener('click', async function(e) {
                             e.preventDefault();
                             document.querySelector('#quiz-form').style.display = 'none';
                             document.querySelector('#quiz-summary').style.display = 'block';
                             document.querySelector('#correct-count').textContent = correctAnswers;
+                            await saveXP(QUIZ_COMPLETION_XP);
                         });
                     }
-
+                
                     updateProgressBar();
                 });
-            </script>
-
-            <script type="text/javascript">
-                // Add this near your other variable declarations
-                let totalXP = "{{ request.user.experience_points }}";
-                const CORRECT_ANSWER_XP = 10;
-                const WRONG_ANSWER_XP = 7;
-                const QUIZ_COMPLETION_XP = 20;
-
-                // Add the XP display HTML after your quiz-header div
-                document.querySelector('.quiz-header').insertAdjacentHTML('afterend', `
-    <div class="xp-display position-fixed top-0 end-0 m-3 p-3 bg-dark rounded shadow">
-        <div class="d-flex align-items-center">
-            <span class="me-2">XP:</span>
-            <span id="current-xp">${totalXP}</span>
-        </div>
-    </div>
-`);
-
-                // Add these functions to handle XP updates
-                async function saveXP(xpAmount) {
-                    try {
-                        const response = await fetch('', {  // Empty string means current URL
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify({
-                                xp_amount: xpAmount
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Failed to save XP');
-                        }
-
-                        const data = await response.json();
-                        if (data.status === 'success') {
-                            updateXPDisplay(data.xp_gained);
-                        }
-                    } catch (error) {
-                        console.error('Error saving XP:', error);
-                    }
-                }
-
-                function updateXPDisplay(xpGained) {
-                    const xpDisplay = document.getElementById('current-xp');
-                    totalXP += xpGained;
-                    xpDisplay.textContent = totalXP;
-
-                    // Show XP gain animation
-                    const xpGainElement = document.createElement('div');
-                    xpGainElement.className = 'xp-gain-animation';
-                    xpGainElement.textContent = `+${xpGained} XP`;
-                    document.querySelector('.xp-display').appendChild(xpGainElement);
-
-                    setTimeout(() => xpGainElement.remove(), 1000);
-                }
-
-                // Update your existing check-answer event listener
-                document.querySelectorAll('.check-answer').forEach(button => {
-                    button.addEventListener('click', async function () {
-                        // ... existing code ...
-
-                        if (isCorrect) {
-                            feedbackAlert.className = 'alert alert-success text-white';
-                            feedbackAlert.textContent = currentQuestionExplanation;
-                            selectedRadio.closest('.choice-card').classList.add('correct-answer');
-                            correctAnswers++;
-                            await saveXP(CORRECT_ANSWER_XP);
-                        } else {
-                            feedbackAlert.className = 'alert alert-danger text-white';
-                            selectedRadio.closest('.choice-card').classList.add('incorrect-answer');
-                            const correctChoice = questionContainer.querySelector('input[data-correct="true"]');
-                            correctChoice.closest('.choice-card').classList.add('correct-answer');
-                            feedbackAlert.textContent = currentQuestionExplanation;
-                            await saveXP(WRONG_ANSWER_XP);
-                        }
-
-                        // ... rest of existing code ...
-                    });
-                });
-
-                // Update your finish button event listener
-                if (finishBtn) {
-                    finishBtn.addEventListener('click', async function (e) {
-                        e.preventDefault();
-                        document.querySelector('#quiz-form').style.display = 'none';
-                        document.querySelector('#quiz-summary').style.display = 'block';
-                        document.querySelector('#correct-count').textContent = correctAnswers;
-                        await saveXP(QUIZ_COMPLETION_XP);
-                    });
-                }
-
-                // Add CSS for XP animation
-                const style = document.createElement('style');
-                style.textContent = `
-    .xp-gain-animation {
-        position: absolute;
-        right: 100%;
-        color: #00ff00;
-        animation: xpFloat 1s ease-out forwards;
-        margin-right: 10px;
-    }
-
-    @keyframes xpFloat {
-        0% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-    }
-`;
-                document.head.appendChild(style);
-            </script>
+                </script>
 
             {% if messages %}
             {% for message in messages %}

@@ -158,28 +158,17 @@ def quiz(request, pk):
         total_explanations = explanations.count()
         correct_count = 0
 
-        if request.method == 'POST':
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # Handle XP updates via AJAX
-                data = json.loads(request.body)
-                xp_amount = data.get('xp_amount', 0)
-                request.user.experience_points += xp_amount
-                request.user.save()
-                return JsonResponse({
-                    'status': 'success',
-                    'new_xp': request.user.experience_points,
-                    'xp_gained': xp_amount
-                })
-            
-            else:
-                for question in questions:
-                    selected_choice_id = request.POST.get(
-                        f'selected_choice_{question.id}')
-                    if selected_choice_id:
-                        selected_choice = get_object_or_404(
-                            Choice, pk=selected_choice_id)
-                        if selected_choice.is_correct:
-                            correct_count += 1
+        if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Handle XP updates via AJAX
+            data = json.loads(request.body)
+            xp_amount = data.get('xp_amount', 0)
+            request.user.experience_points += xp_amount
+            request.user.save()
+            return JsonResponse({
+                'status': 'success',
+                'new_xp': request.user.experience_points,
+                'xp_gained': xp_amount
+            })
 
         quiz_data = {
             'quiz': quiz,
