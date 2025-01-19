@@ -138,7 +138,7 @@
 <body>
     <div class="container-fluid round-font-style">
         <div class="row flex-nowrap">
-                <div class="col-md-6 py-3 my-3" style="margin-left: 24rem; margin-right: -20rem;">
+                <div class="col-md-6 py-3 my-3" style="margin-left: 24rem; margin-right: -40rem;">
                     {% if user.is_authenticated %}  
                     <div class="quiz-header">
                         <div class="card-header">
@@ -352,12 +352,12 @@
                             feedbackDiv.style.display = 'block';
                             
                             if (isCorrect) {
-                                feedbackAlert.className = 'alert alert-success text-white';
+                                feedbackAlert.className = 'alert alert-success text-light';
                                 feedbackAlert.textContent = currentQuestionExplanation;
                                 selectedRadio.closest('.choice-card').classList.add('correct-answer');
                                 correctAnswers++;
                             } else {
-                                feedbackAlert.className = 'alert alert-danger text-white';
+                                feedbackAlert.className = 'alert alert-danger text-light';
                                 selectedRadio.closest('.choice-card').classList.add('incorrect-answer');
                                 const correctChoice = questionContainer.querySelector('input[data-correct="true"]');
                                 correctChoice.closest('.choice-card').classList.add('correct-answer');

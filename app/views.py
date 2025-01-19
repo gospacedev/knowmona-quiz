@@ -1,35 +1,26 @@
-from multiprocessing.pool import AsyncResult
-from PyPDF2 import PdfReader
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.urls import reverse
-from docx import Document
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from django.views.decorators.csrf import csrf_exempt
 import os
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth import authenticate, login, logout
+from docx import Document
+from PyPDF2 import PdfReader
+from dotenv import load_dotenv
+from google.oauth2 import id_token
 from django.contrib import messages
+from django.shortcuts import render
+from django.contrib.auth import login
+from django.core.mail import EmailMessage
+from google.auth.transport import requests
+from .tokens import account_activation_token
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
+from .utils import infer_quiz_json, save_quiz_from_json
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.sites.shortcuts import get_current_site
+from django.shortcuts import get_object_or_404, render, redirect
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile
 from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateChoiceFormSet, ProfileForm
-from .utils import infer_quiz_json, save_quiz_from_json
-from django.contrib.auth import login
-from django.shortcuts import render, redirect
-from dotenv import load_dotenv
-import time
-
-from django.template.loader import render_to_string
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.core.mail import EmailMessage
-
-from django.contrib.auth import get_user_model
-
-from .tokens import account_activation_token
-
-from .tasks import create_quiz, process_uploaded_file
 
 load_dotenv()
 
@@ -114,27 +105,30 @@ def app(request):
 def profile(request):
     if request.user.is_authenticated:
         nickname = request.user.nickname
+        email = request.user.email
+        first_name = request.user.first_name
+        last_name = request.user.last_name
 
         if request.method == 'POST':
             form = ProfileForm(data=request.POST, instance=request.user)
             update = form.save(commit=False)
             update.user = request.user
             update.save()
+            messages.success(request, "Your profile has been updated!")
         else:
             form = ProfileForm(instance=request.user)
 
         profile_info = {
             'nickname': nickname,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
             'form': form,
         }
 
         return render(request, 'profile.html', profile_info)
     else:
         return redirect('login')
-
-
-def bites(request):
-    return render(request, 'bites.html')
 
 
 def quizzes(request):
