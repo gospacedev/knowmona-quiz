@@ -29,7 +29,7 @@ class LearnerUser(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=50, blank=True, unique=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
-    #experience_points = models.IntegerField(default=0)
+    experience_points = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)

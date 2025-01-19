@@ -95,10 +95,11 @@ class SignUpLearnerUser(UserCreationForm):
 			return email
 	
 class ProfileForm(forms.ModelForm):
+	class Meta:
+		model = LearnerUser
+		fields = ('email', 'nickname', 'first_name', 'last_name')
+
 	email = forms.CharField(required=True, widget=forms.widgets.TextInput(attrs={"placeholder":"Email", "class":"form-control"}), label="")
 	nickname = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Nickname", "class":"form-control"}), label="")
 	first_name = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"First name", "class":"form-control"}), label="")
 	last_name = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Last name", "class":"form-control"}), label="")
-	class Meta:
-		model = LearnerUser
-		fields = ('email', 'nickname', 'first_name', 'last_name')
