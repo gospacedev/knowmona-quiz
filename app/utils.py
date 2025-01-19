@@ -18,7 +18,7 @@ def get_external_data(search_term, api_key, cse_id, **kwargs):
 
     service = build("customsearch", "v1", developerKey=api_key)
     
-    res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
+    res = service.cse().list(q=search_term, cx=cse_id, fields="items(link,snippet)", **kwargs).execute()
     
     # Create separate strings for links and snippets
     links = ""
@@ -73,66 +73,87 @@ def infer_quiz_json(form, uploaded_texts=""):
         }
 
 
+from django.db import transaction
+
 def save_quiz_from_json(quiz_data, external_reference, quiz):
-    questions_to_create = []
-    explanations_to_create = []
-    choices_to_create = []
-
-    for question_num in range(1, 11):
-        question_key = f"Q{question_num}"
-
-        question_data = quiz_data.get(question_key)
-        if not question_data:
-            continue
-
-        # Prepare question for bulk creation
-        question = Question(
-            quiz=quiz,
-            text=question_data["question"]
-        )
-        questions_to_create.append(question)
-
-        # Prepare explanation for bulk creation
-        explanation = Explanation(
-            question=question,  # Note: Explanation is tied to Question
-            text=question_data["explanation"]
-        )
-        explanations_to_create.append(explanation)
-
-        correct_answer = question_data.get("answer")
-        if not correct_answer:
-            continue  # Skip if no answer is found
-
-        # Prepare choices for bulk creation
-        choice_keys = [f"choice_{i}" for i in range(1, 5)]
-        for choice_key in choice_keys:
-            choice_text = question_data.get(choice_key)
-            if not choice_text:
+    """
+    Optimized version of quiz data loader using transaction.atomic() and get_or_create
+    to minimize database operations and ensure data consistency.
+    """
+    # Use transaction.atomic() to ensure all operations succeed or fail together
+    with transaction.atomic():
+        # Prepare all data structures first
+        questions_data = []
+        explanations_data = []
+        choices_data = []
+        
+        # Pre-allocate lists for better memory efficiency
+        for question_num in range(1, 11):
+            question_key = f"Q{question_num}"
+            question_data = quiz_data.get(question_key)
+            
+            if not question_data:
                 continue
 
-            is_correct = (choice_key == correct_answer)
-            choices_to_create.append(
-                Choice(
-                    question=question,
-                    text=choice_text,
-                    is_correct=is_correct
-                )
+            question = Question(
+                quiz=quiz,
+                text=question_data["question"]
+            )
+            questions_data.append(question)
+
+            explanations_data.append({
+                'text': question_data["explanation"],
+                'question': question  # Will be updated after bulk create
+            })
+
+            correct_answer = question_data.get("answer")
+            if correct_answer:
+                for i in range(1, 5):
+                    choice_key = f"choice_{i}"
+                    choice_text = question_data.get(choice_key)
+                    
+                    if choice_text:
+                        choices_data.append({
+                            'text': choice_text,
+                            'is_correct': (choice_key == correct_answer),
+                            'question': question  # Will be updated after bulk create
+                        })
+
+        # Bulk create questions and get their IDs
+        if questions_data:
+            questions = Question.objects.bulk_create(
+                questions_data,
+                batch_size=100,  # Adjust based on your database
+                ignore_conflicts=True
             )
 
-    # Bulk create all questions, explanations, and choices
-    if questions_to_create:
-        Question.objects.bulk_create(questions_to_create)
-    
-    # Bulk create all explanations
-    if explanations_to_create:
-        Explanation.objects.bulk_create(explanations_to_create)
+            # Create explanations with correct question references
+            if explanations_data:
+                Explanation.objects.bulk_create([
+                    Explanation(
+                        question=questions[i],
+                        text=exp_data['text']
+                    )
+                    for i, exp_data in enumerate(explanations_data)
+                ], batch_size=100)
 
-    # Bulk create all choices
-    if choices_to_create:
-        Choice.objects.bulk_create(choices_to_create)
+            # Create choices with correct question references
+            if choices_data:
+                # Map the original question objects to their created counterparts
+                question_map = {q_data: q_created 
+                              for q_data, q_created in zip(questions_data, questions)}
+                
+                Choice.objects.bulk_create([
+                    Choice(
+                        question=question_map[choice_data['question']],
+                        text=choice_data['text'],
+                        is_correct=choice_data['is_correct']
+                    )
+                    for choice_data in choices_data
+                ], batch_size=100)
 
-    # Create the reference object
-    Reference.objects.create(
-        quiz=quiz,
-        text=external_reference
-    )
+        # Create reference using get_or_create to avoid duplicates
+        Reference.objects.get_or_create(
+            quiz=quiz,
+            defaults={'text': external_reference}
+        )
