@@ -63,7 +63,7 @@ class UserEnergy(models.Model):
         return False
     
     def __str__(self):
-        return (f"{self.user} Energy")
+        return (f"{self.user}")
 
 class Quiz(models.Model):
     QUESTION_DIFFICULTY_CHOICES = {
