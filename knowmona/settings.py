@@ -227,7 +227,3 @@ EMAIL_PORT = 587
 EMAIL_FROM = 'knowmonacontact@gmail.com'
 EMAIL_HOST_USER = 'knowmonacontact@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_APP_PASSWORD')
-
-CELERY_BROKER_URL = os.getenv('REDIS_URL')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'

@@ -41,6 +41,29 @@ class LearnerUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+class UserEnergy(models.Model):
+    user = models.OneToOneField(LearnerUser, on_delete=models.CASCADE)
+    energy = models.IntegerField(default=100)
+    last_reset = models.DateTimeField(default=timezone.now)
+
+    def reset_if_new_day(self):
+        now = timezone.now()
+        if now.date() > self.last_reset.date():
+            self.energy = 100
+            self.last_reset = now
+            self.save()
+
+    def use_energy(self, amount=10):
+        self.reset_if_new_day()
+        if self.energy >= amount:
+            self.energy -= amount
+            self.save()
+            return True
+        return False
+    
+    def __str__(self):
+        return (f"{self.user} Energy")
 
 class Quiz(models.Model):
     QUESTION_DIFFICULTY_CHOICES = {

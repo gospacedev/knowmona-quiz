@@ -21,8 +21,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile
 from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateChoiceFormSet, ProfileForm
+from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile, UserEnergy
 
 load_dotenv()
 
@@ -42,66 +42,69 @@ def contact(request):
 
 
 def app(request):
-    nickname = None
-
-    if request.user.is_authenticated:
-        nickname = getattr(request.user, 'nickname', None)
-        quiz_form = QuizForm(
-            initial={'question_difficulty': 'Average', 'tone': 'Casual'})
-
-        if request.method == 'POST':
-            quiz_form = QuizForm(request.POST)
-            if quiz_form.is_valid():
-                quiz = quiz_form.save(commit=False)
-                quiz.user = request.user
-
-                quiz.save()
-
-                # Handle file uploads
-                files = request.FILES.getlist('files')
-                uploaded_texts = []
-
-                for file in files:
-                    try:
-                        uploaded_file = UploadedFile(quiz=quiz, file=file)
-                        uploaded_file.save()
-
-                        file_handle = uploaded_file.file.open()
-                        file_extension = os.path.splitext(file.name)[1].lower()
-
-                        if file_extension == '.txt':
-                            uploaded_texts.append(
-                                file_handle.read().decode('utf-8'))
-                        elif file_extension == '.pdf':
-                            reader = PdfReader(file_handle)
-                            uploaded_texts.append(
-                                ''.join(page.extract_text() for page in reader.pages))
-                        elif file_extension == '.docx':
-                            doc = Document(file_handle)
-                            uploaded_texts.append(
-                                '\n'.join(p.text for p in doc.paragraphs))
-
-                        file_handle.close()
-                    except Exception as e:
-                        messages.error(request, f"Error processing file {file.name}: {e}")
-                        continue
-
-                try:
-                    json_output, external_reference = infer_quiz_json(
-                        quiz_form, "\n".join(uploaded_texts))
-                    save_quiz_from_json(json_output, external_reference, quiz)
-                    return redirect('quiz', pk=quiz.id)
-
-                except Exception as e:
-                    messages.error(request, f"Error creating quiz: {e}")
-                    return redirect('app')
-
-            else:
-                messages.error(request, "Invalid form submission.")
-
-        return render(request, 'app.html', {'quiz_form': quiz_form, 'nickname': nickname, 'user_xp': request.user.experience_points})
-    else:
+    if not request.user.is_authenticated:
         return redirect('login')
+        
+    nickname = getattr(request.user, 'nickname', None)
+    user_energy = UserEnergy.objects.get_or_create(user=request.user)[0]
+    user_energy.reset_if_new_day()  # Check and reset if it's a new day
+
+    quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
+    
+    if request.method == 'POST':
+        # Check energy before processing the form
+        if not user_energy.use_energy(10):
+            messages.error(request, "Not enough energy! Energy resets daily.")
+            return redirect('app')
+            
+        quiz_form = QuizForm(request.POST)
+        if quiz_form.is_valid():
+            quiz = quiz_form.save(commit=False)
+            quiz.user = request.user
+            quiz.save()
+            
+            # Handle file uploads
+            files = request.FILES.getlist('files')
+            uploaded_texts = []
+            for file in files:
+                try:
+                    uploaded_file = UploadedFile(quiz=quiz, file=file)
+                    uploaded_file.save()
+                    file_handle = uploaded_file.file.open()
+                    file_extension = os.path.splitext(file.name)[1].lower()
+                    if file_extension == '.txt':
+                        uploaded_texts.append(file_handle.read().decode('utf-8'))
+                    elif file_extension == '.pdf':
+                        reader = PdfReader(file_handle)
+                        uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                    elif file_extension == '.docx':
+                        doc = Document(file_handle)
+                        uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+                    file_handle.close()
+                except Exception as e:
+                    messages.error(request, f"Error processing file {file.name}: {e}")
+                    continue
+
+            try:
+                json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
+                save_quiz_from_json(json_output, external_reference, quiz)
+                return redirect('quiz', pk=quiz.id)
+            except Exception as e:
+                # Refund energy if quiz creation fails
+                user_energy.energy += 10
+                user_energy.save()
+                messages.error(request, f"Error creating quiz: {e}")
+                return redirect('app')
+        else:
+            messages.error(request, "Invalid form submission.")
+
+    context = {
+        'quiz_form': quiz_form, 
+        'nickname': nickname, 
+        'user_xp': request.user.experience_points,
+        'user_energy': user_energy.energy  # Add energy to context
+    }
+    return render(request, 'app.html', context)
 
 
 def profile(request):

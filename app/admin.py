@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Quiz, Question, Choice, Reference, Explanation, LearnerUser, UploadedFile
+from .models import Quiz, Question, Choice, Reference, Explanation, LearnerUser, UploadedFile, UserEnergy
 
 # Register your models here.
 class LearnerUserAdmin(UserAdmin):
@@ -23,3 +23,4 @@ admin.site.register(LearnerUser, LearnerUserAdmin)
 admin.site.register(Reference)
 admin.site.register(Explanation)
 admin.site.register(UploadedFile)
+admin.site.register(UserEnergy)
