@@ -23,8 +23,11 @@
     }
 
     body {
-        background-color: #2a2a2a;
-    }
+    background-color: #2a2a2a;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
 
     .progress-bar {
         background-image: linear-gradient(to right, rgb(2, 202, 202), rgb(55, 202, 2));
@@ -116,12 +119,9 @@
         width: 100%;
     }
 
-    /* New styles */
     .quiz-header {
         margin-bottom: 20px;
     }
-
-
 
     .question-text {
         word-wrap: break-word;
@@ -144,9 +144,9 @@
 </style>
 
 <body>
-    <div class="container-fluid round-font-style">
-        <div class="row flex-nowrap">
-            <div class="col-md-6 py-3 my-3" style="margin-left: 24rem; margin-right: -60rem;">
+    <div class="container-fluid round-font-style p-0">
+        <div class="row g-0 justify-content-center w-100 m-0">
+            <div class="col-md-6 py-3 my-3">
                 {% if user.is_authenticated %}
                 <div class="quiz-header">
                     <div class="card-header">
@@ -441,13 +441,13 @@
                             feedbackDiv.style.display = 'block';
                 
                             if (isCorrect) {
-                                feedbackAlert.className = 'alert alert-success text-white';
+                                feedbackAlert.className = 'alert alert-success';
                                 feedbackAlert.textContent = currentQuestionExplanation;
                                 selectedRadio.closest('.choice-card').classList.add('correct-answer');
                                 correctAnswers++;
                                 await saveXP(CORRECT_ANSWER_XP);
                             } else {
-                                feedbackAlert.className = 'alert alert-danger text-white';
+                                feedbackAlert.className = 'alert alert-danger';
                                 selectedRadio.closest('.choice-card').classList.add('incorrect-answer');
                                 const correctChoice = questionContainer.querySelector('input[data-correct="true"]');
                                 correctChoice.closest('.choice-card').classList.add('correct-answer');
