@@ -44,25 +44,26 @@ def contact(request):
 def app(request):
     if not request.user.is_authenticated:
         return redirect('login')
-        
+
     nickname = getattr(request.user, 'nickname', None)
     user_energy = UserEnergy.objects.get_or_create(user=request.user)[0]
     user_energy.reset_if_new_day()  # Check and reset if it's a new day
 
-    quiz_form = QuizForm(initial={'question_difficulty': 'Average', 'tone': 'Casual'})
-    
+    quiz_form = QuizForm(
+        initial={'question_difficulty': 'Average', 'tone': 'Casual'})
+
     if request.method == 'POST':
         # Check energy before processing the form
         if not user_energy.use_energy(10):
             messages.error(request, "Not enough energy! Energy resets daily.")
             return redirect('app')
-            
+
         quiz_form = QuizForm(request.POST)
         if quiz_form.is_valid():
             quiz = quiz_form.save(commit=False)
             quiz.user = request.user
             quiz.save()
-            
+
             # Handle file uploads
             files = request.FILES.getlist('files')
             uploaded_texts = []
@@ -73,20 +74,25 @@ def app(request):
                     file_handle = uploaded_file.file.open()
                     file_extension = os.path.splitext(file.name)[1].lower()
                     if file_extension == '.txt':
-                        uploaded_texts.append(file_handle.read().decode('utf-8'))
+                        uploaded_texts.append(
+                            file_handle.read().decode('utf-8'))
                     elif file_extension == '.pdf':
                         reader = PdfReader(file_handle)
-                        uploaded_texts.append(''.join(page.extract_text() for page in reader.pages))
+                        uploaded_texts.append(
+                            ''.join(page.extract_text() for page in reader.pages))
                     elif file_extension == '.docx':
                         doc = Document(file_handle)
-                        uploaded_texts.append('\n'.join(p.text for p in doc.paragraphs))
+                        uploaded_texts.append(
+                            '\n'.join(p.text for p in doc.paragraphs))
                     file_handle.close()
                 except Exception as e:
-                    messages.error(request, f"Error processing file {file.name}: {e}")
+                    messages.error(request, f"Error processing file {
+                                   file.name}: {e}")
                     continue
 
             try:
-                json_output, external_reference = infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
+                json_output, external_reference = infer_quiz_json(
+                    quiz_form, "\n".join(uploaded_texts))
                 save_quiz_from_json(json_output, external_reference, quiz)
                 return redirect('quiz', pk=quiz.id)
             except Exception as e:
@@ -99,8 +105,8 @@ def app(request):
             messages.error(request, "Invalid form submission.")
 
     context = {
-        'quiz_form': quiz_form, 
-        'nickname': nickname, 
+        'quiz_form': quiz_form,
+        'nickname': nickname,
         'user_xp': request.user.experience_points,
         'user_energy': user_energy.energy  # Add energy to context
     }
@@ -145,6 +151,20 @@ def quizzes(request):
             'quizzes': quizzes,
         }
         return render(request, 'quizzes.html', quiz_list)
+    else:
+        return redirect('login')
+
+
+def leaderboard(request):
+    if request.user.is_authenticated:
+        leading_learners = LearnerUser.objects.order_by(
+            'experience_points')  # Note the minus sign
+
+        leaderboard_data = {
+            'leading_learners': leading_learners,
+        }
+
+        return render(request, 'leaderboard.html', leaderboard_data)
     else:
         return redirect('login')
 
