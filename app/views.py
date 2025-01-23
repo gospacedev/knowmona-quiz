@@ -155,20 +155,6 @@ def quizzes(request):
         return redirect('login')
 
 
-def leaderboard(request):
-    if request.user.is_authenticated:
-        leading_learners = LearnerUser.objects.order_by(
-            '-experience_points')
-
-        leaderboard_data = {
-            'leading_learners': leading_learners,
-        }
-
-        return render(request, 'leaderboard.html', leaderboard_data)
-    else:
-        return redirect('login')
-
-
 def quiz(request, pk):
     if request.user.is_authenticated:
         quiz = get_object_or_404(Quiz, id=pk)
