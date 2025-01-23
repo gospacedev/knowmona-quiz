@@ -158,7 +158,7 @@ def quizzes(request):
 def leaderboard(request):
     if request.user.is_authenticated:
         leading_learners = LearnerUser.objects.order_by(
-            'experience_points')  # Note the minus sign
+            '-experience_points')
 
         leaderboard_data = {
             'leading_learners': leading_learners,
