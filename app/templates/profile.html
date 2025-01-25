@@ -6,32 +6,35 @@
     {% block content %}
     <div class="col-md-6 offset-md-3">
         {% if user.is_authenticated %}
+        <h3 class="mt-5 mb-5"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona"
+            style="display: inline; width: 86px; height: 60px;"> Your Profile</h3>
 
-        <div class="xp-display top-0 end-0 m-3 p-3 bg-dark rounded position-fixed">
-            <div class="d-flex align-items-center">
-                <span class="me-2"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+        <div class="card">
+            <div class="card-body">
+                <h6 style="float: right; color: #13e18f;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
                     <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
-                  </svg> Total XP </span>
-                <span>{{ user.experience_points }}</span>
+                </svg> {{ user.experience_points }} Total XP</h6>
+                <h4 style="text-align: left;">{{ user.nickname }}</h4>
+                <h6 class="text-muted" style="float: right;">Joined {{ user.date_joined|date:"F Y" }}</h6>
+                <h5 style="text-align: left;" class="text-muted"> {{ user.first_name }} {{ user.last_name }}</h5>
             </div>
         </div>
 
-        <h2 class="mt-5 mb-3"><img src="{% static '/media/profile-icon.png' %}" alt="Knowmona"
-                style="display: inline; width: 86px; height: 60px;"> Your Profile</h2>
 
-        <form method="POST" class="mt-4">
+        <form method="POST" class="mt-5 form-control-sm">
             {% csrf_token %}
-            <div class="mb-3">
+            <h5 class="text-muted">Update Profile</h5>
+            <div class="mb-1">
                 {{ form.email.label_tag }}
                 {{ form.email }}
             </div>
 
-            <div class="mb-3">
+            <div class="">
                 {{ form.nickname.label_tag }}
                 {{ form.nickname }}
             </div>
             
-            <div class="row mb-3">
+            <div class="row">
                 <div class="col-md-6">
                     {{ form.first_name.label_tag }}
                     {{ form.first_name }}
