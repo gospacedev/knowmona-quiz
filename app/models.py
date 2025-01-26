@@ -26,7 +26,7 @@ class MainUserManager(BaseUserManager):
 
 class LearnerUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    nickname = models.CharField(max_length=50, blank=True, unique=True)
+    nickname = models.CharField(max_length=50, blank=True, unique=False)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     experience_points = models.IntegerField(default=0)
