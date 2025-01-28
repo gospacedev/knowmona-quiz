@@ -41,9 +41,6 @@ def contact(request):
     return render(request, "contact.html")
 
 
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
-import time
-
 def app(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -89,28 +86,15 @@ def app(request):
                             '\n'.join(p.text for p in doc.paragraphs))
                     file_handle.close()
                 except Exception as e:
-                    messages.error(request, f"Error processing file {file.name}: {e}")
+                    messages.error(request, f"Error processing file {
+                                   file.name}: {e}")
                     continue
 
-            def generate_quiz():
-                return infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
-
             try:
-                # Use ThreadPoolExecutor to run the quiz generation with a timeout
-                with ThreadPoolExecutor() as executor:
-                    future = executor.submit(generate_quiz)
-                    try:
-                        json_output, external_reference = future.result(timeout=29)  # 29-second timeout
-                        save_quiz_from_json(json_output, external_reference, quiz)
-                        return redirect('quiz', pk=quiz.id)
-                    except TimeoutError:
-                        # Clean up the incomplete quiz
-                        quiz.delete()
-                        # Refund energy
-                        user_energy.energy += 10
-                        user_energy.save()
-                        messages.error(request, "Sorry, creating your quiz took longer than expected. Please try again....")
-                        return redirect('app')
+                json_output, external_reference = infer_quiz_json(
+                    quiz_form, "\n".join(uploaded_texts))
+                save_quiz_from_json(json_output, external_reference, quiz)
+                return redirect('quiz', pk=quiz.id)
             except Exception as e:
                 # Refund energy if quiz creation fails
                 user_energy.energy += 10
@@ -124,7 +108,7 @@ def app(request):
         'quiz_form': quiz_form,
         'nickname': nickname,
         'user_xp': request.user.experience_points,
-        'user_energy': user_energy.energy
+        'user_energy': user_energy.energy  # Add energy to context
     }
     return render(request, 'app.html', context)
 
