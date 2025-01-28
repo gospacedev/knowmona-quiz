@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+<body>
+    {% block content %}
+    <div class="col-md-6 offset-md-3">
+        <h3 class="mt-5 mb-5">Friends</h3>
+
+        {% if user_list %}
+        {% for user in user_list %}
+        <h4>{{ user.nickname }}</h4>
+        {% endfor %}
+        {% endif %}
+    </div>
+    {% endblock %}
+</body>

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 
+
 class MainUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -30,6 +31,7 @@ class LearnerUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     experience_points = models.IntegerField(default=0)
+    friends = models.ManyToManyField("LearnerUser", blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -41,7 +43,18 @@ class LearnerUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-    
+
+
+class FriendRequest(models.Model):
+    from_user = models.ForeignKey(
+        LearnerUser, related_name="from_user", on_delete=models.CASCADE)
+    to_user = models.ForeignKey(
+        LearnerUser, related_name="to_user", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return (f"From {self.from_user} to {self.to_user}")
+
+
 class UserEnergy(models.Model):
     user = models.OneToOneField(LearnerUser, on_delete=models.CASCADE)
     energy = models.IntegerField(default=100)
@@ -61,9 +74,10 @@ class UserEnergy(models.Model):
             self.save()
             return True
         return False
-    
+
     def __str__(self):
         return (f"{self.user}")
+
 
 class Quiz(models.Model):
     QUESTION_DIFFICULTY_CHOICES = {
@@ -82,9 +96,9 @@ class Quiz(models.Model):
         max_length=12, choices=QUESTION_DIFFICULTY_CHOICES, default="average")
     tone = models.CharField(
         max_length=12, choices=TONE_CHOICES, default="casual")
-    
+
     user = models.ForeignKey(LearnerUser, on_delete=models.CASCADE, null=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -129,7 +143,8 @@ class Reference(models.Model):
 
 
 class UploadedFile(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="uploaded_files")
+    quiz = models.ForeignKey(
+        Quiz, on_delete=models.CASCADE, related_name="uploaded_files")
     file = models.FileField(upload_to='uploaded_files/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
