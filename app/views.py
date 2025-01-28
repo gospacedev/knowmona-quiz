@@ -143,16 +143,66 @@ def profile(request):
 
 
 def quizzes(request):
-    if request.user.is_authenticated:
-        quizzes = Quiz.objects.filter(
-            user=request.user).order_by('-created_at')
-
-        quiz_list = {
-            'quizzes': quizzes,
-        }
-        return render(request, 'quizzes.html', quiz_list)
-    else:
+    if not request.user.is_authenticated:
         return redirect('login')
+        
+    context = {
+        'quizzes': Quiz.objects.filter(user=request.user).order_by('-created_at'),
+        'shared_quizzes': Quiz.objects.filter(shared_with=request.user).order_by('-created_at')
+    }
+    return render(request, 'quizzes.html', context)
+
+def shared_quizzes(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+        
+    context = {
+        'shared_quizzes': Quiz.objects.filter(shared_with=request.user).order_by('-created_at')
+    }
+    return render(request, 'shared.html', context)
+    
+def share_with_all_friends(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+    
+    if request.method == 'POST':
+        count = quiz.share_with_friends(request.user)
+        if count > 0:
+            messages.success(request, f"Shared with {count} friends!")
+        else:
+            messages.warning(request, "No friends to share with")
+    
+    return redirect('quizzes')
+
+
+def unshare_quiz(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+    
+    if request.method == 'POST':
+        # Remove all shared connections
+        removed_count = quiz.shared_with.count()
+        quiz.shared_with.clear()
+        messages.success(request, f"Unshared from {removed_count} friends")
+    
+    return redirect('quizzes')
+
+def unfriend(request, friend_id):
+    friend = get_object_or_404(LearnerUser, id=friend_id)
+    
+    if request.method == 'POST':
+        # Remove mutual friendship
+        request.user.friends.remove(friend)
+        friend.friends.remove(request.user)
+        
+        # Delete any pending friend requests
+        FriendRequest.objects.filter(
+            Q(from_user=request.user, to_user=friend) |
+            Q(from_user=friend, to_user=request.user)
+        ).delete()
+        
+        messages.success(request, f"Unfriended {friend.nickname}")
+    
+    return redirect('friends')
+
 
 
 def quiz(request, pk):
@@ -195,12 +245,69 @@ def quiz(request, pk):
         return redirect('login')
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.contrib import messages
+from .models import LearnerUser, FriendRequest
+
+@login_required
 def friends(request):
-    user_list = LearnerUser.objects.all()
-    friends_data = {
+    search_query = request.GET.get('query', None)
+    user_list = LearnerUser.objects.none()  # Empty initial queryset
+
+    if search_query:
+        user_list = LearnerUser.objects.exclude(id=request.user.id).filter(
+            Q(nickname__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query)
+        )
+
+    friends = request.user.friends.all()
+    sent_requests = FriendRequest.objects.filter(from_user=request.user)
+    received_requests = FriendRequest.objects.filter(to_user=request.user)
+
+    context = {
         'user_list': user_list,
+        'friends': friends,
+        'sent_requests': sent_requests,
+        'received_requests': received_requests,
+        'search_query': search_query,
     }
-    return render(request, 'friends.html', friends_data)
+    return render(request, 'friends.html', context)
+
+
+@login_required
+def send_friend_request(request, user_id):
+    to_user = get_object_or_404(LearnerUser, id=user_id)
+    
+    # Prevent duplicate requests or existing friendships
+    if request.user.friends.filter(id=to_user.id).exists():
+        messages.warning(request, 'You are already friends!')
+    elif FriendRequest.objects.filter(from_user=request.user, to_user=to_user).exists():
+        messages.warning(request, 'Friend request already sent!')
+    else:
+        FriendRequest.objects.create(from_user=request.user, to_user=to_user)
+        messages.success(request, 'Friend request sent!')
+    
+    return redirect('friends')
+
+@login_required
+def accept_friend_request(request, request_id):
+    friend_request = get_object_or_404(FriendRequest, id=request_id, to_user=request.user)
+    request.user.friends.add(friend_request.from_user)
+    friend_request.from_user.friends.add(request.user)
+    friend_request.delete()
+    messages.success(request, f'You are now friends with {friend_request.from_user.nickname}!')
+    return redirect('friends')
+
+@login_required
+def decline_friend_request(request, request_id):
+    friend_request = get_object_or_404(FriendRequest, id=request_id, to_user=request.user)
+    friend_request.delete()
+    messages.info(request, 'Friend request declined.')
+    return redirect('friends')
+
 
 
 def update_quiz(request, pk):

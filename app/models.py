@@ -101,6 +101,17 @@ class Quiz(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    shared_with = models.ManyToManyField(
+        LearnerUser, 
+        related_name='shared_quizzes',
+        blank=True
+    )
+
+    def share_with_friends(self, user):
+        friends = user.friends.all()
+        self.shared_with.add(*friends)
+        return friends.count()
+
     def __str__(self):
         return (f"{self.topic}")
 

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="col-md-6 offset-md-3">
+
+    {% if user.is_authenticated %}
+
+    <h3 class="mt-5">Shared with You</h3>
+    {% if shared_quizzes %}
+    {% for quiz in shared_quizzes %}
+    <div class="card mt-3 mb-3 p-0">
+        <div class="card-body">
+            <h4>{{ quiz.topic }}</h4>
+            <small class="text-muted">
+                Shared by {{ quiz.user.nickname }} on {{ quiz.created_at|date:"F j, Y" }}
+            </small>
+            <br>
+            <a href="{% url 'quiz' quiz.id %}" class="btn btn-success rounded-pill mt-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-play-fill" viewBox="0 0 16 16">
+                    <path
+                        d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
+                </svg> Play</a>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-muted">No quizzes have been shared with you yet</p>
+    {% endif %}
+
+    <div class="card text-center mt-3 mb-3 p-0">
+        <div class="card-body">
+            <a href="{% url 'app' %}" class="btn btn-success"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                    height="16" fill="currentColor" class="bi bi-plus-square-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0" />
+                </svg> Create a new quiz</a>
+        </div>
+    </div>
+
+    {% else %}
+    <p>Now are currently logged out, you can <a href="{% url 'signup' %}">sign up</a> or <a
+            href="{% url 'login' %}">login</a></p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

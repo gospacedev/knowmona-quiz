@@ -8,22 +8,79 @@
 
     {% if user.is_authenticated %}
 
-    <h3>Your quizzes</h3>
+    <!-- Shared Quizzes Section -->
+    <h3 class="mt-5">Shared with You</h3>
+    {% if shared_quizzes %}
+    {% for quiz in shared_quizzes %}
+    <div class="card mt-3 mb-3 p-0">
+        <div class="card-body">
+            <h4>{{ quiz.topic }}</h4>
+            <small class="text-muted">
+                Shared by {{ quiz.user.nickname }} on {{ quiz.created_at|date:"F j, Y" }}
+            </small>
+            <br>
+            <a href="{% url 'quiz' quiz.id %}" class="btn btn-success rounded-pill mt-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-play-fill" viewBox="0 0 16 16">
+                    <path
+                        d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
+                </svg> Play</a>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-muted">No quizzes have been shared with you yet</p>
+    {% endif %}
+
+    <!-- User's Quizzes Section -->
+    <h3 class="mt-5">Your Quizzes</h3>
     {% if quizzes %}
     {% for quiz in quizzes %}
     <div class="card mt-3 mb-3 p-0">
         <div class="card-body">
             <h4>{{ quiz.topic }}</h4>
-            <div class="text-body-secondary mb-3">
-                <h7>Created at {{ quiz.created_at|date:"F j, Y" }}</h7>
+            <div class="text-muted mb-3">
+                <small>Created at {{ quiz.created_at|date:"F j, Y" }}</small>
             </div>
-            <a href="{% url 'quiz' quiz.id %}" class="btn btn-success rounded-pill"><svg
-                    xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
-                    class="bi bi-play-fill" viewBox="0 0 16 16">
-                    <path
-                        d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
-                </svg> Play</a>
-            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exampleModal"
+            <div class="btn-group" role="group">
+                <a href="{% url 'quiz' quiz.id %}" class="btn btn-success rounded-pill">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                        class="bi bi-play-fill" viewBox="0 0 16 16">
+                        <path
+                            d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
+                    </svg> Play</a>
+                </a>
+
+                
+            {% if not quiz.shared_with.exists %}
+            <form method="post" action="{% url 'share_with_friends' quiz.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary ms-2 rounded-pill" style="color: whitesmoke;" title="Share with all friends">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-share" viewBox="0 0 16 16">
+                        <path
+                            d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5m-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3" />
+                    </svg>
+                    Share
+                </button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'unshare_quiz' quiz.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-secondary rounded-pill ms-2" 
+                        title="Unshare from all friends">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+                         fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                    Unshare
+                </button>
+                </form>
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#exampleModal"
                 style="float: right;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3"
                     viewBox="0 0 16 16">
@@ -31,7 +88,7 @@
                         d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
                 </svg>
             </button>
-            <a href="{% url 'update_quiz' quiz.id%}" class="btn btn-outline-secondary me-2" style="float: right;"><svg
+            <a href="{% url 'update_quiz' quiz.id%}" class="btn btn-outline-secondary me-2 rounded-pill" style="float: right;"><svg
                     xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-pencil-square" viewBox="0 0 16 16">
                     <path
