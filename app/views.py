@@ -22,7 +22,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateChoiceFormSet, ProfileForm
-from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile, UserEnergy
+from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, SuggestedQuiz, UploadedFile, UserEnergy
 
 load_dotenv()
 
@@ -48,6 +48,8 @@ def app(request):
     nickname = getattr(request.user, 'nickname', None)
     user_energy = UserEnergy.objects.get_or_create(user=request.user)[0]
     user_energy.reset_if_new_day()  # Check and reset if it's a new day
+
+    suggested_quizzes = SuggestedQuiz.objects.all()
 
     quiz_form = QuizForm(
         initial={'question_difficulty': 'Average', 'tone': 'Casual'})
