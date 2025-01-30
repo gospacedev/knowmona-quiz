@@ -42,10 +42,7 @@ def contact(request):
 
 import timeout_decorator
 
-@timeout_decorator.timeout(29, timeout_exception=TimeoutError)
-def generate_quiz_with_timeout(quiz_form, uploaded_texts):
-    return infer_quiz_json(quiz_form, "\n".join(uploaded_texts))
-
+@timeout_decorator.timeout(30, timeout_exception=TimeoutError)
 def app(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -91,21 +88,15 @@ def app(request):
                             '\n'.join(p.text for p in doc.paragraphs))
                     file_handle.close()
                 except Exception as e:
-                    messages.error(request, f"Error processing file {file.name}: {e}")
+                    messages.error(request, f"Error processing file {
+                                   file.name}: {e}")
                     continue
 
             try:
-                json_output, external_reference = generate_quiz_with_timeout(quiz_form, uploaded_texts)
+                json_output, external_reference = infer_quiz_json(
+                    quiz_form, "\n".join(uploaded_texts))
                 save_quiz_from_json(json_output, external_reference, quiz)
                 return redirect('quiz', pk=quiz.id)
-            except TimeoutError:
-                # Refund energy
-                user_energy.energy += 10
-                user_energy.save()
-                # Delete the quiz
-                quiz.delete()
-                messages.error(request, "Sorry, the quiz generation timed out. Please try again...")
-                return redirect('app')
             except Exception as e:
                 # Refund energy if quiz creation fails
                 user_energy.energy += 10
