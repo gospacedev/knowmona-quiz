@@ -40,9 +40,6 @@ def about(request):
 def contact(request):
     return render(request, "contact.html")
 
-import timeout_decorator
-
-@timeout_decorator.timeout(30, timeout_exception=TimeoutError)
 def app(request):
     if not request.user.is_authenticated:
         return redirect('login')
