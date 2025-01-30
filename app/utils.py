@@ -52,7 +52,7 @@ def infer_quiz_json(form, uploaded_texts=""):
 
         response = client.chat.completions.create(
             model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-            max_tokens=4096,
+            max_tokens=2048,
             temperature=0.7,
             top_p=0.7,
             top_k=50,
