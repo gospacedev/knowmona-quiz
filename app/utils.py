@@ -6,6 +6,9 @@ from .schemas import QuizSchematic
 from .models import Question, Choice, Reference, Explanation
 from googleapiclient.discovery import build
 from django.db import transaction
+from openai import OpenAI
+
+openai_client = OpenAI()
 
 
 load_dotenv()
@@ -51,12 +54,12 @@ def infer_quiz_json(form, uploaded_texts=""):
         f"User inputs: {uploaded_texts or 'None'}[/INST]"
     ).replace('{snippets}', snippets[:2000])  # Truncate to prevent token overflow
 
-    response = client.chat.completions.create(
-        model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        messages=[{"role": "system", "content": PROMPT_TEMPLATE}],
-        max_tokens=2048,
-        temperature=0.7,
-        response_format={"type": "json_object", "schema": QuizSchematic.model_json_schema()},
+    response = openai_client.beta.chat.completions.parse(
+        model="gpt-4o-2024-08-06",
+    messages=[
+        {"role": "system", "content": PROMPT_TEMPLATE},
+    ],
+    response_format=QuizSchematic,
     )
 
     return json.loads(response.choices[0].message.content), links
