@@ -389,7 +389,7 @@
             }
 
             const currentEnergy = "{{ user_energy|default:'0' }}";
-            if (parseInt(currentEnergy) < 20) {
+            if (parseInt(currentEnergy) < 10) {
                 e.preventDefault();
                 alert('Not enough energy! Energy resets daily.');
                 return;
@@ -399,7 +399,7 @@
             badge.classList.remove('d-none');
             
             // Update energy display immediately
-            const newEnergy = parseInt(currentEnergy) - 20;
+            const newEnergy = parseInt(currentEnergy) - 10;
             document.querySelector('.progress-bar').style.width = newEnergy + '%';
             document.querySelector('.text-light').textContent = newEnergy + '/100';
             
@@ -410,7 +410,7 @@
             badge.style.animation = 'none';
             setTimeout(() => {
                 badge.style.animation = 'fadeOutUp 1s ease forwards';
-            }, 20);
+            }, 10);
         });
 
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');

@@ -53,7 +53,7 @@ def app(request):
 
     if request.method == 'POST':
         # Check energy before processing the form
-        if not user_energy.use_energy(20):
+        if not user_energy.use_energy(10):
             messages.error(request, "Not enough energy! Energy resets daily.")
             return redirect('app')
 
@@ -96,7 +96,7 @@ def app(request):
                 return redirect('quiz', pk=quiz.id)
             except Exception as e:
                 # Refund energy if quiz creation fails
-                user_energy.energy += 20
+                user_energy.energy += 10
                 user_energy.save()
                 messages.error(request, f"Error creating quiz: {e}")
                 return redirect('app')
