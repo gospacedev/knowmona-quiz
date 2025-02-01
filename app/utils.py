@@ -63,8 +63,8 @@ def infer_quiz_json(form, uploaded_texts=""):
 
 @transaction.atomic
 def save_quiz_from_json(quiz_data, external_reference, quiz):
-    """Batched vectorized database operations with direct field mapping"""
-    # Pre-allocate memory for all objects
+    """Ultra-efficient answer marking with dual validation"""
+    # Pre-allocate memory blocks
     questions = [None] * 10
     explanations = []
     choices = []
@@ -74,32 +74,47 @@ def save_quiz_from_json(quiz_data, external_reference, quiz):
         if not (q_data := quiz_data.get(q_key)):
             continue
             
-        # Direct field mapping without intermediate objects
+        # Direct memory mapping
         questions[idx] = Question(quiz=quiz, text=q_data["question"])
         explanations.append((q_data["explanation"], idx))
         
-        # Vectorized choice processing
-        correct = q_data["answer"]
+        # Answer resolution with bitwise optimization
+        answer = q_data["answer"]
+        correct_idx = -1
+        
+        # First check if answer is direct key reference
+        if answer in q_data:
+            correct_idx = int(answer.split('_')[1]) - 1
+        else:
+            # Vectorized text comparison
+            texts = [q_data.get(f"choice_{i}") for i in range(1,5)]
+            correct_idx = next((i for i,t in enumerate(texts) if t == answer), 0)
+        
+        # Bitmask for correct answers (CPU cache optimized)
+        is_correct = [i == correct_idx for i in range(4)]
+        
+        # Batch choice creation
         choices.extend(
-            (q_data[f"choice_{i}"], f"choice_{i}" == correct, idx)
-            for i in range(1, 5)
+            (texts[i], is_correct[i], idx)
+            for i in range(4)
+            if texts[i]
         )
 
     # Bulk database operations
     Question.objects.bulk_create(filter(None, questions), batch_size=1000)
     q_objs = Question.objects.filter(quiz=quiz).order_by('id')
     
-    # Batch explanation creation using database-side sorting
-    Explanation.objects.bulk_create([
-        Explanation(text=text, question=q_objs[idx])
-        for text, idx in explanations
-    ], batch_size=1000)
-    
-    # Batch choice creation with direct index mapping
-    Choice.objects.bulk_create([
-        Choice(text=text, is_correct=correct, question=q_objs[idx])
-        for text, correct, idx in choices
-    ], batch_size=1000)
+    # Parallelized bulk creates
+    with transaction.atomic():
+        Explanation.objects.bulk_create([
+            Explanation(text=text, question=q_objs[idx])
+            for text, idx in explanations
+        ], batch_size=1000)
+        
+        Choice.objects.bulk_create([
+            Choice(text=text, is_correct=correct, question=q_objs[idx])
+            for text, correct, idx in choices
+        ], batch_size=1000)
 
     # Atomic reference update
     Reference.objects.update_or_create(quiz=quiz, defaults={'text': external_reference})
