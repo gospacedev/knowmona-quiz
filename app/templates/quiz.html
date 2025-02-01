@@ -1,6 +1,5 @@
 {% load static %}
 
-
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 
@@ -11,137 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="shortcut icon" type="image/png" href="{% static '/media/favicon.ico' %}" />
+    <link rel="stylesheet" href="{% static '/css/quiz.css' %}">
+    <script src="{% static '/js/quiz.js' %}"></script>
 </head>
-
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
-
-    .round-font-style {
-        font-family: "Varela Round", sans-serif;
-        font-weight: 400;
-        font-style: normal;
-    }
-
-    body {
-    background-color: #2a2a2a;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-    .progress-bar {
-        background-image: linear-gradient(to right, rgb(2, 202, 202), rgb(55, 202, 2));
-
-    }
-
-    .navigation-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .navigation-buttons button:hover {
-        transform: translateY(-1px);
-        transition: transform 0.2s;
-    }
-
-    .choice-card {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 2px solid transparent;
-        margin-bottom: 1rem;
-    }
-
-    .choice-card:hover {
-        background-color: #4f4f4f;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .choice-card.selected {
-        border-color: rgb(2, 202, 202);
-        background-color: rgba(2, 202, 202, 0.1);
-    }
-
-    .choice-card.correct-answer {
-        border-color: #28a745;
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-
-    .choice-card.incorrect-answer {
-        border-color: #dc3545;
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-
-    .choice-card .form-check-input {
-        position: absolute;
-        opacity: 0;
-    }
-
-    .choice-card .form-check {
-        margin: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    .choice-card .form-check-label {
-        display: block;
-        width: 100%;
-        margin: 0;
-        word-wrap: break-word;
-    }
-
-    .choice-card:focus-within {
-        outline: 2px solid rgb(2, 202, 202);
-        outline-offset: 2px;
-    }
-
-    .question-container {
-        position: absolute;
-        width: 100%;
-        transition: transform 0.5s ease, opacity 0.5s ease;
-        opacity: 1;
-    }
-
-    .question-container.slide-out {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-
-    .question-container.slide-in {
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    #questions-wrapper {
-        position: relative;
-        min-height: 400px;
-        width: 100%;
-    }
-
-    .quiz-header {
-        margin-bottom: 20px;
-    }
-
-    .question-text {
-        word-wrap: break-word;
-    }
-
-    .navigation-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .xp-display {
-        padding: 0.75rem;
-        background-color: #333b42;
-        border-radius: 0.375rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        margin: 1rem;
-        color: whitesmoke;
-    }
-</style>
 
 <body>
     <div class="container-fluid round-font-style p-0">
@@ -162,7 +33,7 @@
                                 </a>
                             </div>
                         </div>
-                        <h3 class="text-muted d-inline-block mt-3">{{ quiz.topic }}</h3>
+                        <h3 class="d-inline-block mt-3" style="color: rgb(212, 212, 212);">{{ quiz.topic }}</h3>
                     </div>
 
                     <div class="progress mb-3">
@@ -182,7 +53,7 @@
                             <div class="question-container" id="question-{{ forloop.counter }}" 
                                     {% if not forloop.first %}style="transform: translateX(100%); opacity: 0;"{% endif %}>
 
-                                <div class="question-text mb-4">
+                                <div class="question-text mb-4" style="color: whitesmoke;">
                                     <h4>{{ question.text }}</h4>
                                 </div>
 
@@ -196,7 +67,7 @@
                                                     name="question_{{ question.id }}" value="{{ choice.id }}"
                                                     id="choice_{{ choice.id }}" data-question="{{ question.id }}"
                                                     data-correct="{{ choice.is_correct|yesno:'true,false' }}">
-                                                <label class="form-check-label" for="choice_{{ choice.id }}">
+                                                <label class="form-check-label" style="color: whitesmoke;" for="choice_{{ choice.id }}">
                                                     {{ choice.text }}
                                                 </label>
                                             </div>
@@ -212,7 +83,7 @@
 
                                         {% if not forloop.last %}
                                         <button type="button" class="btn btn-success next-btn"
-                                            style="display: none;">Next</button>
+                                            style="display: none;" disabled>Next</button>
                                         {% endif %}
 
                                         {% if forloop.last %}
@@ -270,218 +141,6 @@
                 </div>
                 {% endif %}
             </div>
-
-            <script type="text/javascript">
-                document.addEventListener('DOMContentLoaded', function() {
-                    let currentQuestion = 1;
-                    let totalQuestions = 10;
-                    let correctAnswers = 0;
-                    let totalXP = 0;
-                    
-                    const CORRECT_ANSWER_XP = 10;
-                    const WRONG_ANSWER_XP = 7;
-                    const QUIZ_COMPLETION_XP = 20;
-                
-                    // Add XP display HTML
-                    const xpDisplayHTML = `
-                        <div class="xp-display position-fixed top-0 end-0 m-3 p-3 bg-dark rounded shadow" style="color: #13e18f;">
-                            <div class="d-flex align-items-center">
-                                <span class="me-2"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
-                <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
-                                </svg> XP </span>
-                                <span id="current-xp">${totalXP}</span>
-                            </div>
-                        </div>
-                    `;
-                    document.querySelector('.quiz-header').insertAdjacentHTML('afterend', xpDisplayHTML);
-                
-                    // Add CSS for XP animation
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        .xp-gain-animation {
-                            position: absolute;
-                            right: 100%;
-                            color: #13e18f;
-                            animation: xpFloat 1s ease-out forwards;
-                            margin-right: 10px;
-                        }
-                
-                        @keyframes xpFloat {
-                            0% {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
-                            100% {
-                                opacity: 0;
-                                transform: translateY(-20px);
-                            }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                
-                    async function saveXP(xpAmount) {
-                        try {
-                            const response = await fetch(window.location.href, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                },
-                                body: JSON.stringify({
-                                    xp_amount: xpAmount
-                                })
-                            });
-                            
-                            if (!response.ok) throw new Error('Failed to save XP');
-                            
-                            const data = await response.json();
-                            if (data.status === 'success') {
-                                updateXPDisplay(xpAmount);
-                            }
-                        } catch (error) {
-                            console.error('Error saving XP:', error);
-                        }
-                    }
-                
-                    function updateXPDisplay(xpGained) {
-                        const xpDisplay = document.getElementById('current-xp');
-                        totalXP += xpGained;
-                        xpDisplay.textContent = totalXP;
-                        
-                        // Show XP gain animation
-                        const xpGainElement = document.createElement('div');
-                        xpGainElement.className = 'xp-gain-animation';
-                        xpGainElement.textContent = `+${xpGained} XP`;
-                        document.querySelector('.xp-display').appendChild(xpGainElement);
-                        
-                        setTimeout(() => xpGainElement.remove(), 1000);
-                    }
-                
-                    function updateProgressBar() {
-                        const progress = (currentQuestion / totalQuestions) * 100;
-                        const progressBar = document.querySelector('.progress-bar');
-                        progressBar.style.width = `${progress}%`;
-                        progressBar.setAttribute('aria-valuenow', progress);
-                    }
-                
-                    document.querySelectorAll('.choice-card').forEach(card => {
-                        const radio = card.querySelector('input[type="radio"]');
-                        const label = card.querySelector('label');
-                
-                        card.addEventListener('click', function(e) {
-                            const questionContainer = this.closest('.question-container');
-                            questionContainer.querySelectorAll('.choice-card').forEach(c => {
-                                c.classList.remove('selected');
-                            });
-                            this.classList.add('selected');
-                            radio.checked = true;
-                            e.stopPropagation();
-                        });
-                
-                        label.addEventListener('click', function(e) {
-                            const card = this.closest('.choice-card');
-                            const questionContainer = card.closest('.question-container');
-                            questionContainer.querySelectorAll('.choice-card').forEach(c => {
-                                c.classList.remove('selected');
-                            });
-                            card.classList.add('selected');
-                            radio.checked = true;
-                            e.stopPropagation();
-                        });
-                    });
-                
-                    function showQuestion(questionNumber) {
-                        const currentQuestionEl = document.querySelector(`#question-${questionNumber - 1}`);
-                        const nextQuestionEl = document.querySelector(`#question-${questionNumber}`);
-                        
-                        if (currentQuestionEl) {
-                            currentQuestionEl.classList.add('slide-out');
-                            setTimeout(() => {
-                                currentQuestionEl.style.display = 'none';
-                            }, 500);
-                        }
-                
-                        if (nextQuestionEl) {
-                            setTimeout(() => {
-                                nextQuestionEl.style.transform = 'translateX(100%)';
-                                nextQuestionEl.style.display = 'block';
-                                setTimeout(() => {
-                                    nextQuestionEl.style.transform = 'translateX(0)';
-                                    nextQuestionEl.style.opacity = '1';
-                                }, 50);
-                            }, currentQuestionEl ? 500 : 0);
-                        }
-                
-                        updateProgressBar();
-                    }
-                
-                    document.querySelectorAll('.check-answer').forEach(button => {
-                        button.addEventListener('click', async function() {
-                            const questionContainer = this.closest('.question-container');
-                            const selectedRadio = questionContainer.querySelector('input[type="radio"]:checked');
-                            const feedbackDiv = questionContainer.querySelector('.feedback');
-                            const feedbackAlert = feedbackDiv.querySelector('.alert');
-                            const nextButton = questionContainer.querySelector('.next-btn');
-                            const finishButton = questionContainer.querySelector('.finish-btn');
-                            const currentQuestionExplanation = feedbackDiv.querySelector('input[id="currentQuestionExplanation"]').value;
-                
-                            if (!selectedRadio) {
-                                feedbackDiv.style.display = 'block';
-                                feedbackAlert.className = 'alert alert-warning';
-                                feedbackAlert.textContent = 'Please select an answer!';
-                                return;
-                            }
-                
-                            questionContainer.querySelectorAll('.choice-card').forEach(card => {
-                                card.classList.remove('correct-answer', 'incorrect-answer');
-                            });
-                
-                            const isCorrect = selectedRadio.dataset.correct === 'true';
-                            feedbackDiv.style.display = 'block';
-                
-                            if (isCorrect) {
-                                feedbackAlert.className = 'alert alert-success';
-                                feedbackAlert.textContent = currentQuestionExplanation;
-                                selectedRadio.closest('.choice-card').classList.add('correct-answer');
-                                correctAnswers++;
-                                await saveXP(CORRECT_ANSWER_XP);
-                            } else {
-                                feedbackAlert.className = 'alert alert-danger';
-                                selectedRadio.closest('.choice-card').classList.add('incorrect-answer');
-                                const correctChoice = questionContainer.querySelector('input[data-correct="true"]');
-                                correctChoice.closest('.choice-card').classList.add('correct-answer');
-                                feedbackAlert.textContent = currentQuestionExplanation;
-                                await saveXP(WRONG_ANSWER_XP);
-                            }
-                
-                            if (nextButton) nextButton.style.display = 'inline-block';
-                            if (finishButton) finishButton.style.display = 'inline-block';
-                            this.style.display = 'none';
-                        });
-                    });
-                
-                    document.querySelectorAll('.next-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            currentQuestion++;
-                            showQuestion(currentQuestion);
-                        });
-                    });
-                
-                    const finishBtn = document.querySelector('.finish-btn');
-                    if (finishBtn) {
-                        finishBtn.addEventListener('click', async function(e) {
-                            e.preventDefault();
-                            document.querySelector('#quiz-form').style.display = 'none';
-                            document.querySelector('#quiz-summary').style.display = 'block';
-                            document.querySelector('#correct-count').textContent = correctAnswers;
-                            await saveXP(QUIZ_COMPLETION_XP);
-                        });
-                    }
-                
-                    updateProgressBar();
-                });
-                </script>
 
             {% if messages %}
             {% for message in messages %}
