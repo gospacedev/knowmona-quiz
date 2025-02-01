@@ -33,7 +33,7 @@ worker_class = "gthread"
 # gunicorn will start this many worker processes. The Python buildpack automatically sets a
 # default for WEB_CONCURRENCY at dyno boot, based on the number of CPUs and available RAM:
 # https://devcenter.heroku.com/articles/python-concurrency
-workers = os.environ.get("WEB_CONCURRENCY", 3)
+workers = os.environ.get("WEB_CONCURRENCY", 1)
 
 # Each `gthread` worker process will use a pool of this many threads.
 threads = 5
@@ -44,7 +44,7 @@ preload_app = True
 # Workers silent for more than this many seconds are killed and restarted.
 # Note: This only affects the maximum request time when using the `sync` worker.
 # For all other worker types it acts only as a worker heartbeat timeout.
-timeout = 120
+timeout = 20
 
 # After receiving a restart signal, workers have this much time to finish serving requests.
 # This should be set to a value less than the 30 second Heroku dyno shutdown timeout:
