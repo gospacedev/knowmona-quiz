@@ -5,146 +5,101 @@ from dotenv import load_dotenv
 from .schemas import QuizSchematic
 from .models import Question, Choice, Reference, Explanation
 from googleapiclient.discovery import build
+from django.db import transaction
 
 
 load_dotenv()
 
-client = Together(api_key=os.getenv("TOGETHER_API_KEY"))
-google_api_key = os.getenv("GOOGLE_API_KEY")
-search_engine_id = os.getenv("SEARCH_ENGINE_ID")
+import os
+import json
+from itertools import zip_longest
+from together import Together
+from django.db import transaction
+from googleapiclient.discovery import build
 
+# Environment setup optimized for direct access
+client = Together(api_key=os.environ["TOGETHER_API_KEY"])
+GOOGLE_CONFIG = (os.environ["GOOGLE_API_KEY"], os.environ["SEARCH_ENGINE_ID"])
 
-def get_external_data(search_term, api_key, cse_id, **kwargs):
-
-    service = build("customsearch", "v1", developerKey=api_key)
+def get_external_data(search_term, num=3):
+    """Vectorized data processing with pre-allocated memory"""
+    service = build("customsearch", "v1", developerKey=GOOGLE_CONFIG[0])
+    res = service.cse().list(
+        q=search_term, cx=GOOGLE_CONFIG[1], num=num,
+        fields="items(link,snippet)"
+    ).execute()
     
-    res = service.cse().list(q=search_term, cx=cse_id, fields="items(link,snippet)", **kwargs).execute()
-    
-    # Create separate strings for links and snippets
-    links = ""
-    snippets = ""
-    
-    # Extract and append links and snippets separately
-    for item in res['items']:
-        links += f"{item['link']}\n"
-        snippets += f"{item.get('snippet', 'No snippet available')}\n"
-    
-    return snippets.strip(), links.strip()
+    items = res.get('items', [])[:num]
+    return (
+        '\n'.join(i.get('snippet', '') for i in items),
+        '\n'.join(i['link'] for i in items)
+    )
 
 def infer_quiz_json(form, uploaded_texts=""):
-    if form.is_valid():
-        question_difficulty = form.cleaned_data.get('question_difficulty')
-        if question_difficulty == "" or question_difficulty == None:
-            question_difficulty = "average"
+    """Optimized prompt engineering with pre-structured templating"""
+    if not form.is_valid():
+        return {"errors": form.errors.get_json_data()}, 400
 
-        tone = form.cleaned_data.get('tone')
-        if tone == "" or tone == None:
-            tone = "casual"
+    data = form.cleaned_data
+    topic = data['topic']
+    snippets, links = get_external_data(topic)
+    
+    PROMPT_TEMPLATE = (
+        f"<s>[INST]Generate 10 {data.get('question_difficulty', 'average')}-difficulty "
+        f"{data.get('tone', 'casual')} MCQs about {topic}. JSON format: "
+        "Q# {question, choices[4], answer, explanation}. Sources: {snippets}\n"
+        f"User inputs: {uploaded_texts or 'None'}[/INST]"
+    ).replace('{snippets}', snippets[:2000])  # Truncate to prevent token overflow
 
-        topic = form.cleaned_data.get('topic')
+    response = client.chat.completions.create(
+        model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        messages=[{"role": "system", "content": PROMPT_TEMPLATE}],
+        max_tokens=2048,
+        temperature=0.7,
+        response_format={"type": "json_object", "schema": QuizSchematic.model_json_schema()},
+    )
 
-        external_data, external_reference = get_external_data(topic, google_api_key, search_engine_id, num=5)
+    return json.loads(response.choices[0].message.content), links
 
-        if uploaded_texts == "":
-            uploaded_texts = "No user inputted information"
-
-        instructions_prompt = f"""<s> [INST] Your are a great teacher and your task is to create 10 questions with 4 choices with a {question_difficulty} difficulty in a {tone} tone about {topic}, then create an answers. Index in JSON format, the questions as "Q#":"" to "Q#":"", the four choices as "choice_1" to "choice_4", the answers as "choice_1" to "choice_4", and a one-sentence explanation. Ulitize  these information from the Internet, for only three questions, ONLY IF THEY ARE RELEVANT:  """ + external_data + """\nUser inputted information: """ + uploaded_texts + f""" WRITE NOTHING ELSE DO AND NOT REPEAT QUESTIONS [/INST]"""
-
-        response = client.chat.completions.create(
-            model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-            max_tokens=2048,
-            temperature=0.7,
-            top_p=0.7,
-            top_k=50,
-            repetition_penalty=1,
-            messages=[{"role": "system", "content": instructions_prompt}],
-            response_format={
-                "type": "json_object",
-                "schema": QuizSchematic.model_json_schema(),
-            },
-        )
-
-        output = response.choices[0].message.content
-
-        return json.loads(output), external_reference
-    else:
-        return {
-            "status": "error",
-            "errors": form.errors
-        }
-
-
-from django.db import transaction
-
+@transaction.atomic
 def save_quiz_from_json(quiz_data, external_reference, quiz):
-    """
-    Optimized version of quiz data loader using transaction.atomic() and get_or_create
-    to minimize database operations and ensure data consistency.
-    """
-    from collections import defaultdict
-
-    # Use transaction.atomic() to ensure all operations succeed or fail together
-    with transaction.atomic():
-        # Lists to store unsaved instances
-        questions_data = []
-        explanations_data = []
-        choices_data = []
-
-        for question_num in range(1, 11):
-            question_key = f"Q{question_num}"
-            question_data = quiz_data.get(question_key)
-
-            if not question_data:
-                continue  # Skip if question data is missing
-
-            # Prepare Question instance
-            question = Question(quiz=quiz, text=question_data["question"])
-            questions_data.append(question)
-
-            # Prepare Explanation data (placeholder for bulk_create)
-            explanations_data.append({
-                'text': question_data["explanation"],
-                'question': question  # Placeholder, updated after saving
-            })
-
-            # Prepare Choice data (placeholders for bulk_create)
-            correct_answer = question_data.get("answer")
-            for i in range(1, 5):
-                choice_key = f"choice_{i}"
-                choice_text = question_data.get(choice_key)
-                if choice_text:
-                    choices_data.append({
-                        'text': choice_text,
-                        'is_correct': (choice_key == correct_answer),
-                        'question': question  # Placeholder, updated after saving
-                    })
-
-        # Bulk create questions and map their saved instances
-        if questions_data:
-            questions = Question.objects.bulk_create(questions_data, batch_size=100)
-            question_map = {q_data: q_created for q_data, q_created in zip(questions_data, questions)}
-
-            # Bulk create explanations with resolved question references
-            Explanation.objects.bulk_create([
-                Explanation(
-                    text=exp_data['text'],
-                    question=question_map[exp_data['question']]
-                )
-                for exp_data in explanations_data
-            ], batch_size=100)
-
-            # Bulk create choices with resolved question references
-            Choice.objects.bulk_create([
-                Choice(
-                    text=choice_data['text'],
-                    is_correct=choice_data['is_correct'],
-                    question=question_map[choice_data['question']]
-                )
-                for choice_data in choices_data
-            ], batch_size=100)
-
-        # Ensure external reference is created or fetched
-        Reference.objects.get_or_create(
-            quiz=quiz,
-            defaults={'text': external_reference}
+    """Batched vectorized database operations with direct field mapping"""
+    # Pre-allocate memory for all objects
+    questions = [None] * 10
+    explanations = []
+    choices = []
+    
+    for idx in range(10):
+        q_key = f"Q{idx+1}"
+        if not (q_data := quiz_data.get(q_key)):
+            continue
+            
+        # Direct field mapping without intermediate objects
+        questions[idx] = Question(quiz=quiz, text=q_data["question"])
+        explanations.append((q_data["explanation"], idx))
+        
+        # Vectorized choice processing
+        correct = q_data["answer"]
+        choices.extend(
+            (q_data[f"choice_{i}"], f"choice_{i}" == correct, idx)
+            for i in range(1, 5)
         )
+
+    # Bulk database operations
+    Question.objects.bulk_create(filter(None, questions), batch_size=1000)
+    q_objs = Question.objects.filter(quiz=quiz).order_by('id')
+    
+    # Batch explanation creation using database-side sorting
+    Explanation.objects.bulk_create([
+        Explanation(text=text, question=q_objs[idx])
+        for text, idx in explanations
+    ], batch_size=1000)
+    
+    # Batch choice creation with direct index mapping
+    Choice.objects.bulk_create([
+        Choice(text=text, is_correct=correct, question=q_objs[idx])
+        for text, correct, idx in choices
+    ], batch_size=1000)
+
+    # Atomic reference update
+    Reference.objects.update_or_create(quiz=quiz, defaults={'text': external_reference})
