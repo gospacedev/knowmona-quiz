@@ -22,7 +22,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .forms import SignUpLearnerUser, QuizForm, UpdateQuestionFormSet, UpdateChoiceFormSet, ProfileForm
-from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile, UserEnergy
+from .models import LearnerUser, Quiz, Question, Choice, Reference, Explanation, UploadedFile, UserEnergy, Suggestion
 
 load_dotenv()
 
@@ -53,7 +53,7 @@ def app(request):
 
     if request.method == 'POST':
         # Check energy before processing the form
-        if not user_energy.use_energy(10):
+        if not user_energy.use_energy(20):
             messages.error(request, "Not enough energy! Energy resets daily.")
             return redirect('app')
 
@@ -96,18 +96,22 @@ def app(request):
                 return redirect('quiz', pk=quiz.id)
             except Exception as e:
                 # Refund energy if quiz creation fails
-                user_energy.energy += 10
+                user_energy.energy += 20
                 user_energy.save()
                 messages.error(request, f"Error creating quiz: {e}")
                 return redirect('app')
         else:
             messages.error(request, "Invalid form submission.")
 
+
+    suggestions = Suggestion.objects.all()[:3]
+
     context = {
         'quiz_form': quiz_form,
         'nickname': nickname,
         'user_xp': request.user.experience_points,
-        'user_energy': user_energy.energy  # Add energy to context
+        'user_energy': user_energy.energy,  # Add energy to context
+        'suggestions': suggestions,
     }
     return render(request, 'app.html', context)
 

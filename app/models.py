@@ -161,3 +161,13 @@ class UploadedFile(models.Model):
 
     def __str__(self):
         return f"{self.file.name} (uploaded by {self.user.username})"
+
+class Suggestion(models.Model):
+    topic = models.CharField(max_length=100)
+    order = models.PositiveIntegerField(default=0, help_text="Display order position")
+    
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return self.topic

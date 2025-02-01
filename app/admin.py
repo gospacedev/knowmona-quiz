@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Quiz, Question, Choice, Reference, Explanation, LearnerUser, UploadedFile, UserEnergy
+from .models import Quiz, Question, Choice, Reference, Explanation, LearnerUser, UploadedFile, UserEnergy, Suggestion
 
 # Register your models here.
 class LearnerUserAdmin(UserAdmin):
@@ -15,6 +15,11 @@ class LearnerUserAdmin(UserAdmin):
     )
     search_fields = ('email', 'nickname', 'first_name', 'last_name')
     ordering = ('email',)
+
+@admin.register(Suggestion)
+class SuggestionAdmin(admin.ModelAdmin):
+    list_display = ('topic', 'order')
+    list_editable = ('order',)
 
 admin.site.register(Quiz)
 admin.site.register(Question)
