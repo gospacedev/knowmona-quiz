@@ -55,7 +55,7 @@ def infer_quiz_json(form, uploaded_texts=""):
     ).replace('{snippets}', snippets[:2000])  # Truncate to prevent token overflow
 
     response = openai_client.beta.chat.completions.parse(
-        model="gpt-4o-2024-08-06",
+        model="gpt-4o-mini",
     messages=[
         {"role": "system", "content": PROMPT_TEMPLATE},
     ],
