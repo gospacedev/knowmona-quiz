@@ -4,13 +4,146 @@
 
 {% block content %}
 
+<style>
+    .radio-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
 
-<head>
-    <link rel="stylesheet" href="{% static '/css/app.css' %}">
-    <script src="{% static '/js/app.js' %}"></script>
+    .radio-card:hover {
+        transform: scale(1.02);
+    }
+
+    .radio-card.selected {
+        transform: scale(1.05);
+        border-color: rgb(2, 183, 183) !important;
+        background-color: rgba(2, 183, 183, 0.1);
+    }
+
+    .radio-card input[type="radio"] {
+        margin-top: 0px;
+        display: none;
+    }
+
+    .form-control:focus {
+        border-color: gray;
+        box-shadow: 0 0 0 0.2rem rgba(41, 41, 41, 0.25);
+    }
+
+    .choice-groups {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .choice-groups {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .choice-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+
+    /* Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: none;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner-container {
+        text-align: center;
+    }
+
+    .spinner-text {
+        margin-top: 1rem;
+        font-weight: 500;
+    }
+
+    .suggestion-section {
+        display: flex;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Suggestion Cards */
+    .suggestion-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .suggestion-card:hover {
+        transform: scale(1.02);
+    }
+
+    .xp-display {
+        padding: 0.75rem;
+        background-color: #333b42;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin: 1rem;
+        color: #13e18f;
+    }
+
+    .energy-display {
+    color: yellow;
+    z-index: 1000;
+    }
+
+    .energy-display .progress {
+        background-color: #2d3238;
+        width: 100px;
+        height: 8px;
+    }
+
+    .energy-display .progress-bar {
+        transition: width 0.3s ease;
+    }
+
+    .energy-display .energy-cost-badge {
+        animation: fadeOutUp 1s ease forwards;
+        opacity: 0;
+        transform: translateY(0);
+        font-size: 0.7rem;
+        margin-left: -10px;
+        margin-top: -10px;
+    }
+
+    @keyframes fadeOutUp {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+</style>
 </head>
 
 <body>
+
+
+    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner-container">
             <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
@@ -28,7 +161,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="yellow" class="bi bi-lightning-charge-fill" viewBox="0 0 16 16">
                     <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
                 </svg>
-                <span class="energy-cost-badge d-none bg-danger text-white px-2 py-1 rounded-pill position-absolute">-10</span>
+                <span class="energy-cost-badge d-none text-white px-2 py-1 rounded-pill position-absolute" style="background-color: #ffc107;">-10</span>
             </span>
             <div>
                 <div class="progress">
@@ -200,5 +333,88 @@
                 href="{% url 'login' %}">login</a></p>
         {% endif %}
     </div>
+
+    <script>
+        function selectCard(cardElement, value) {
+            const name = cardElement.querySelector('input[type="radio"]').name;
+            document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+                input.closest('.radio-card').classList.remove('selected');
+            });
+            
+            cardElement.classList.add('selected');
+            const radio = cardElement.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('submitButton').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.getElementById('submitButton').disabled = false;
+        }
+
+        function submitSuggestion(topic) {
+            // Set the topic in the input field
+            document.getElementById('topicInput').value = topic;
+
+            // Select default values if none are selected
+            if (!document.querySelector('input[name="question_difficulty"]:checked')) {
+                document.querySelector('input[value="average"]').checked = true;
+                document.querySelector('input[value="average"]').closest('.radio-card').classList.add('selected');
+            }
+            if (!document.querySelector('input[name="tone"]:checked')) {
+                document.querySelector('input[value="casual"]').checked = true;
+                document.querySelector('input[value="casual"]').closest('.radio-card').classList.add('selected');
+            }
+
+            // Submit the form
+            document.getElementById('quizForm').submit();
+            showLoading();
+        }
+
+        // Handle form submission
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            showLoading();
+
+            if (!document.querySelector('input[name="question_difficulty"]:checked')) {
+                document.querySelector('input[value="average"]').checked = true;
+                document.querySelector('input[value="average"]').closest('.radio-card').classList.add('selected');
+            }
+            if (!document.querySelector('input[name="tone"]:checked')) {
+                document.querySelector('input[value="casual"]').checked = true;
+                document.querySelector('input[value="casual"]').closest('.radio-card').classList.add('selected');
+            }
+
+            const currentEnergy = "{{ user_energy|default:'0' }}";
+            if (parseInt(currentEnergy) < 20) {
+                e.preventDefault();
+                alert('Not enough energy! Energy resets daily.');
+                return;
+            }
+            
+            const badge = document.querySelector('.energy-cost-badge');
+            badge.classList.remove('d-none');
+            
+            // Update energy display immediately
+            const newEnergy = parseInt(currentEnergy) - 20;
+            document.querySelector('.progress-bar').style.width = newEnergy + '%';
+            document.querySelector('.text-light').textContent = newEnergy + '/100';
+            
+            // Trigger reflow to restart animation
+            void badge.offsetWidth;
+            
+            // Start animation
+            badge.style.animation = 'none';
+            setTimeout(() => {
+                badge.style.animation = 'fadeOutUp 1s ease forwards';
+            }, 20);
+        });
+
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    </script>
 
     {% endblock %}
