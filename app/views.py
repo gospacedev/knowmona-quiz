@@ -54,7 +54,7 @@ def app(request):
     if request.method == 'POST':
         # Check energy before processing the form
         if not user_energy.use_energy(10):
-            messages.error(request, "Not enough energy! Energy resets daily.")
+            messages.error(request, "Sorry, requests are currently limited. You can create quizzes again tommorow!")
             return redirect('app')
 
         quiz_form = QuizForm(request.POST)
