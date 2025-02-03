@@ -26,17 +26,21 @@ GOOGLE_CONFIG = (os.environ["GOOGLE_API_KEY"], os.environ["SEARCH_ENGINE_ID"])
 
 def get_external_data(search_term, num=3):
     """Vectorized data processing with pre-allocated memory"""
-    service = build("customsearch", "v1", developerKey=GOOGLE_CONFIG[0])
-    res = service.cse().list(
-        q=search_term, cx=GOOGLE_CONFIG[1], num=num,
-        fields="items(link,snippet)"
-    ).execute()
-    
-    items = res.get('items', [])[:num]
-    return (
-        '\n'.join(i.get('snippet', '') for i in items),
-        '\n'.join(i['link'] for i in items)
-    )
+    try:
+        service = build("customsearch", "v1", developerKey=GOOGLE_CONFIG[0])
+        res = service.cse().list(
+            q=search_term, cx=GOOGLE_CONFIG[1], num=num,
+            fields="items(link,snippet)"
+        ).execute()
+        
+        items = res.get('items', [])[:num]
+        return (
+            '\n'.join(i.get('snippet', '') for i in items),
+            '\n'.join(i['link'] for i in items)
+        )
+    except Exception as e:
+        # Log error here if needed
+        return ('', '')  # Return empty strings for both values
 
 def infer_quiz_json(form, uploaded_texts=""):
     """Optimized prompt engineering with pre-structured templating"""
@@ -46,6 +50,9 @@ def infer_quiz_json(form, uploaded_texts=""):
     data = form.cleaned_data
     topic = data['topic']
     snippets, links = get_external_data(topic)
+
+    if links == '':
+        links = 'No external references used'
     
     PROMPT_TEMPLATE = (
         f"<s>[INST]Generate 10 {data.get('question_difficulty', 'average')}-difficulty "
