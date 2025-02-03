@@ -476,6 +476,7 @@ def auth_receiver(request):
     account_family_name = user_data["family_name"]
     user, created = LearnerUser.objects.get_or_create(
         email=account_email,
+        nickname=account_given_name,
         first_name=account_given_name,
         last_name=account_family_name,
     )
