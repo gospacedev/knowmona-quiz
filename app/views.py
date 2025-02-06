@@ -68,7 +68,7 @@ def app(request):
             uploaded_texts = []
             for file in files:
                 try:
-                    uploaded_file = UploadedFile(quiz=quiz, file=file)
+                    uploaded_file = UploadedFile(user=request.user, quiz=quiz, file=file)
                     uploaded_file.save()
                     file_handle = uploaded_file.file.open()
                     file_extension = os.path.splitext(file.name)[1].lower()
@@ -425,8 +425,7 @@ def activateEmail(request, user, to_email):
         messages.success(request, f'Hi {user.nickname}! Please go to you email, {to_email}, inbox and click on \
             received activation link to confirm and complete the registration. Note: Check your spam folder.')
     else:
-        messages.error(request, f'Problem sending confirmation email to {
-                       to_email}, check if you typed it correctly.')
+        messages.error(request, f'Problem sending confirmation email to {to_email}, check if you typed it correctly.')
 
 
 def signup_user(request):
@@ -453,6 +452,15 @@ def delete_quiz(request, pk):
         return redirect('quizzes')
     else:
         return redirect('app')
+    
+def delete_user(request):
+    if request.user.is_authenticated:
+        account = LearnerUser.objects.get(email=request.user.email)
+        account.delete()
+        messages.success(request, "Your account has been successfully deleted...")
+        return redirect('login')
+    else:
+        return redirect('login')
 
 
 # Google authentication logic

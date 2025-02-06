@@ -102,7 +102,7 @@ class Quiz(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     shared_with = models.ManyToManyField(
-        LearnerUser, 
+        LearnerUser,
         related_name='shared_quizzes',
         blank=True
     )
@@ -160,12 +160,14 @@ class UploadedFile(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.file.name} (uploaded by {self.user.username})"
+        return f"{self.file.name}"
+
 
 class Suggestion(models.Model):
     topic = models.CharField(max_length=100)
-    order = models.PositiveIntegerField(default=0, help_text="Display order position")
-    
+    order = models.PositiveIntegerField(
+        default=0, help_text="Display order position")
+
     class Meta:
         ordering = ['order']
 

@@ -21,7 +21,7 @@
         </div>
 
 
-        <form method="POST" class="mt-5 form-control-sm">
+        <form method="POST" class="mt-5 form-control-sm" id="updateAccountForm">
             {% csrf_token %}
             <h5 class="text-muted">Update Profile</h5>
             <div class="mb-1">
@@ -44,9 +44,31 @@
                     {{ form.last_name }}
                 </div>
             </div>
-
-            <button type="submit" class="btn btn-success mt-3 rounded-pill">Update</button>
         </form>
+
+        <div class="flex-wrapper mt-4" style="display: flex;">
+            <button type="submit" class="btn btn-success rounded-pill ms-2" form="updateAccountForm">Update</button>
+            <button class="btn btn-outline-danger rounded-pill btn-sm ms-auto me-2" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">Delete Account</button>
+        </div>
+
+        <div class="modal fade" style="margin-top: 10rem;" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="deleteAccountModalLabel">Delete account</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete your account?</p>
+                            <div class="flex-wrapper" style="display: flex;">
+                                <a href="{% url 'delete_account' %}" class="btn btn-outline-danger ms-auto rounded-pill">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
         {% else %}
         <p>Please <a href="{% url 'login' %}">log in</a> to access your profile.</p>
         {% endif %}

@@ -7,34 +7,7 @@
 <div class="col-md-6 offset-md-3">
 
     {% if user.is_authenticated %}
-
-    <!-- Shared Quizzes Section -->
-    <h3 class="mt-5">Shared with You</h3>
-    {% if shared_quizzes %}
-    {% for quiz in shared_quizzes %}
-    <div class="card mt-3 mb-3 p-0">
-        <div class="card-body">
-            <h4>{{ quiz.topic }}</h4>
-            <small class="text-muted">
-                Shared by {{ quiz.user.nickname }} on {{ quiz.created_at|date:"F j, Y" }}
-            </small>
-            <br>
-            <a href="{% url 'quiz' quiz.id %}" class="btn btn-success rounded-pill mt-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
-                    class="bi bi-play-fill" viewBox="0 0 16 16">
-                    <path
-                        d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393" />
-                </svg> Play</a>
-            </a>
-        </div>
-    </div>
-    {% endfor %}
-    {% else %}
-    <p class="text-muted">No quizzes have been shared with you yet</p>
-    {% endif %}
-
-    <!-- User's Quizzes Section -->
-    <h3 class="mt-5">Your Quizzes</h3>
+    <h3 class="mt-5 mb-2">Your Quizzes</h3>
     {% if quizzes %}
     {% for quiz in quizzes %}
     <div class="card mt-3 mb-3 p-0">
@@ -57,11 +30,9 @@
             <form method="post" action="{% url 'share_with_friends' quiz.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-primary ms-2 rounded-pill" style="color: whitesmoke;" title="Share with all friends">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-share" viewBox="0 0 16 16">
-                        <path
-                            d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5m-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send me-1" viewBox="0 0 16 16">
+                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                      </svg>
                     Share
                 </button>
             </form>
