@@ -23,10 +23,12 @@
     }
 
     body {
-        background-color: #2a2a2a;
+        background-image: linear-gradient(rgb(38, 41, 41), rgb(39, 50, 50));
+        background-attachment: fixed;
         margin: 0;
         padding: 0;
         overflow-x: hidden;
+        color: whitesmoke;
     }
 
     .progress-bar {
@@ -46,14 +48,17 @@
     }
 
     .choice-card {
+        color: whitesmoke;
+        background-color: rgb(36, 42, 42);
         cursor: pointer;
         transition: all 0.2s ease;
         border: 2px solid transparent;
+        border-color: rgb(111, 132, 132);
         margin-bottom: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
     }
 
     .choice-card:hover {
-        background-color: #4f4f4f;
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
@@ -182,14 +187,14 @@
                             <div class="question-container" id="question-{{ forloop.counter }}" 
                                     {% if not forloop.first %}style="transform: translateX(100%); opacity: 0;"{% endif %}>
 
-                                <div class="question-text mb-4">
+                                <div class="question-text mb-3 mt-2">
                                     <h4>{{ question.text }}</h4>
                                 </div>
 
                                 <div class="choices-container">
                                     {% for choice in choices %}
                                     {% if choice.question_id == question.id %}
-                                    <div class="card mt-3 mb-3 choice-card">
+                                    <div class="card mt-4 mb-4 choice-card">
                                         <div class="card-body">
                                             <div class="form-check">
                                                 <input class="form-check-input question-choice" type="radio"

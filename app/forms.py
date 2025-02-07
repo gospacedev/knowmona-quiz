@@ -1,4 +1,4 @@
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm, PasswordResetForm
 from django import forms
 from django.forms import inlineformset_factory
 from .models import Quiz, Question, Choice, LearnerUser
@@ -103,3 +103,33 @@ class ProfileForm(forms.ModelForm):
 	nickname = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Nickname", "class":"form-control"}), label="")
 	first_name = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"First name", "class":"form-control"}), label="")
 	last_name = forms.CharField(widget=forms.widgets.TextInput(attrs={"placeholder":"Last name", "class":"form-control"}), label="")
+
+class SetPasswordForm(SetPasswordForm):
+	class Meta:
+		model = LearnerUser
+		fields = ['new_password1', 'new_password2']
+
+	def __init__(self, *args, **kwargs):
+		super(SetPasswordForm, self).__init__(*args, **kwargs)
+
+		self.fields['new_password1'].widget.attrs['class'] = 'form-control rounded-pill'
+		self.fields['new_password1'].widget.attrs['placeholder'] = 'New password'
+		self.fields['new_password1'].label = ''
+		self.fields['new_password1'].help_text = ''
+
+		self.fields['new_password2'].widget.attrs['class'] = 'form-control rounded-pill'
+		self.fields['new_password2'].widget.attrs['placeholder'] = 'Confirm new password'
+		self.fields['new_password2'].label = ''
+		self.fields['new_password2'].help_text = '<p class="form-text text-muted small">Enter the same password as before, for verification.<p>'
+
+class PasswordResetForm(PasswordResetForm):
+
+	class Meta:
+		model = LearnerUser
+		fields = ('email',)
+
+	email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control rounded-pill', 'placeholder':'Email'}))
+
+	def __init__(self, *args, **kwargs):
+		super(PasswordResetForm, self).__init__(*args, **kwargs)
+
