@@ -213,16 +213,16 @@
 
                                 <div class="navigation-section">
                                     <div class="navigation-buttons">
-                                        <button type="button" class="btn btn-success check-answer">Check</button>
+                                        <button type="button" class="btn btn-success check-answer rounded-pill" style="padding: 10px 20px; font-size: large;">Check</button>
 
                                         {% if not forloop.last %}
-                                        <button type="button" class="btn btn-success next-btn"
-                                            style="display: none;">Next</button>
+                                        <button type="button" class="btn btn-success next-btn rounded-pill"
+                                            style="display: none; padding: 10px 20px; font-size: large;">Next</button>
                                         {% endif %}
 
                                         {% if forloop.last %}
-                                        <button type="submit" class="btn btn-success finish-btn"
-                                            style="display: none;">Finish Quiz</button>
+                                        <button type="submit" class="btn btn-success finish-btn rounded-pill"
+                                            style="display: none; padding: 10px 20px; font-size: large;">Finish Quiz</button>
                                         {% endif %}
                                     </div>
 
@@ -252,7 +252,7 @@
                             Quiz completed! You got <span id="correct-count">0</span> out of {{ total_questions }}
                             correct!
                         </div>
-                        <button type="button" class="btn btn-outline-info" onclick="location.reload()">Retry
+                        <button type="button" class="btn btn-outline-info rounded-pill" onclick="location.reload()">Retry
                             Quiz</button>
                         <div class="card my-3">
                             <div class="card-body">
