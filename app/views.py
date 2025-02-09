@@ -468,34 +468,40 @@ def delete_user(request):
 
 @csrf_exempt
 def auth_receiver(request):
-    """
-    Google calls this URL after the user has signed in with their Google account.
-    """
-    print('Inside')
     token = request.POST['credential']
-    print(token)
-
     user_data = id_token.verify_oauth2_token(
         token, requests.Request(), os.getenv('GOOGLE_OAUTH_CLIENT_ID')
     )
-    print(user_data)
+    
     account_email = user_data["email"]
     account_given_name = user_data["given_name"]
     account_family_name = user_data["family_name"]
+
+    # Get or create user based on email only
     user, created = LearnerUser.objects.get_or_create(
         email=account_email,
-        nickname=account_given_name,
-        first_name=account_given_name,
-        last_name=account_family_name,
+        defaults={
+            'nickname': account_given_name,
+            'first_name': account_given_name,
+            'last_name': account_family_name,
+        }
     )
+
+    # Update user details if they already existed
+    if not created:
+        user.nickname = account_given_name
+        user.first_name = account_given_name
+        user.last_name = account_family_name
+        user.save()
+
     if user is not None:
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, "You have been successfully logged in!")
         return redirect("app")
     else:
-        messages.warning(
-            request, "There was an error login in, please try again...")
+        messages.warning(request, "There was an error logging in, please try again...")
         return redirect("login")
+
 
 
 def sign_out(request):
