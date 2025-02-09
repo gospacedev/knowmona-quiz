@@ -68,7 +68,7 @@ def app(request):
             uploaded_texts = []
             for file in files:
                 try:
-                    uploaded_file = UploadedFile(user=request.user, quiz=quiz, file=file)
+                    uploaded_file = UploadedFile(quiz=quiz, file=file)
                     uploaded_file.save()
                     file_handle = uploaded_file.file.open()
                     file_extension = os.path.splitext(file.name)[1].lower()
