@@ -57,7 +57,7 @@ def infer_quiz_json(form, uploaded_texts=""):
     PROMPT_TEMPLATE = (
         f"<s>[INST]You are a greate teacher who help students learn by creating quizzes with questions that quide them to enlightenment, please generate 10 {data.get('question_difficulty', 'average')}-difficulty "
         f"{data.get('tone', 'casual')} MCQs about {topic}. JSON format: "
-        "Q# {question, choices[4], answer, explanation}. Sources: {snippets}\n"
+        "Q# {question, choices[4], answer, explanation}. Please use some emojis in making the quiz. Sources: {snippets}\n"
         f"User inputs: {uploaded_texts or 'None'}[/INST]"
     ).replace('{snippets}', snippets[:2000])  # Truncate to prevent token overflow
 
