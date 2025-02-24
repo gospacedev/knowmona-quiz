@@ -74,6 +74,7 @@ def infer_quiz_json(form, uploaded_texts=""):
 @transaction.atomic
 def save_quiz_from_json(quiz_data, external_reference, quiz):
     """Ultra-efficient answer marking with dual validation"""
+
     # Pre-allocate memory blocks
     questions = [None] * 10
     explanations = []
