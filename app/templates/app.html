@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<style>
+    .radio-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+    .radio-card:hover {
+        transform: scale(1.02);
+    }
+
+    .radio-card.selected {
+        transform: scale(1.05);
+        border-color: rgb(2, 183, 183) !important;
+        background-color: rgba(2, 183, 183, 0.1);
+    }
+
+    .radio-card input[type="radio"] {
+        margin-top: 0px;
+        display: none;
+    }
+
+    .form-control:focus {
+        border-color: gray;
+        box-shadow: 0 0 0 0.2rem rgba(41, 41, 41, 0.25);
+    }
+
+    .choice-groups {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .choice-groups {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .choice-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+
+    /* Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: none;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner-container {
+        text-align: center;
+    }
+
+    .spinner-text {
+        margin-top: 1rem;
+        font-weight: 500;
+    }
+
+    .suggestion-section {
+        display: flex;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Suggestion Cards */
+    .suggestion-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .suggestion-card:hover {
+        transform: scale(1.02);
+    }
+
+    .xp-display {
+        padding: 0.75rem;
+        background-color: #333b42;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin: 1rem;
+        color: #13e18f;
+    }
+
+    @keyframes fadeOutUp {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+</style>
+</head>
+
+<body>
+
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-container">
+            <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="spinner-text">Generating your quiz! 🚀</div>
+        </div>
+    </div>
+
+    <!-- Main Form Content -->
+    <div class="col-md-6 offset-md-3">
+        {% if user.is_authenticated %}
+
+        <div class="mt-5">
+        {% if nickname %}
+        <h2 class="welcome">Hey, {{ user.nickname }}!</h2>
+        {% else %}
+        <h2 class="welcome">Hey, learner!</h2>
+        {% endif %}
+        <h2>What do you want to learn?</h2>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="quizForm">
+            {% csrf_token %}
+
+            <div class="col container suggestion-section pt-3 pb-4 mb-4 mt-5" style="margin-left: -0.8rem;">
+                {% for suggestion in suggestions %}
+                <div class="card suggestion-card mx-1 my-1 pb-1 col-lg-4 d-flex" style="border-radius: 1rem;"
+                    onclick="submitSuggestion('{{ suggestion.topic|escapejs }}')">
+                    <div class="card-body">
+                        <p class="card-title" style="color: rgb(212, 212, 212);">
+                            {# Fixed icons based on position #}
+                            {% if forloop.counter0 == 0 %}
+                            <font style="font-size: large;">📖</font>
+                            {% elif forloop.counter0 == 1 %}
+                            <font style="font-size: large;">💡</font>
+                            {% else %}
+                            <font style="font-size: large;">✨</font>
+                            {% endif %}
+                            {{ suggestion.topic }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>            
+
+
+            <div class="flex-wrapper" style="display: flex;">
+                <input type="text" name="topic" id="topicInput" class="form-control rounded-pill me-1"
+                    placeholder="Write any topic" required>
+                    <button type="submit" class="btn rounded-pill btn-outline-success" id="submitButton" 
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="whitesmoke" class="bi bi-rocket-takeoff" viewBox="0 0 16 16">
+                        <path d="M9.752 6.193c.599.6 1.73.437 2.528-.362s.96-1.932.362-2.531c-.599-.6-1.73-.438-2.528.361-.798.8-.96 1.933-.362 2.532"/>
+                        <path d="M15.811 3.312c-.363 1.534-1.334 3.626-3.64 6.218l-.24 2.408a2.56 2.56 0 0 1-.732 1.526L8.817 15.85a.51.51 0 0 1-.867-.434l.27-1.899c.04-.28-.013-.593-.131-.956a9 9 0 0 0-.249-.657l-.082-.202c-.815-.197-1.578-.662-2.191-1.277-.614-.615-1.079-1.379-1.275-2.195l-.203-.083a10 10 0 0 0-.655-.248c-.363-.119-.675-.172-.955-.132l-1.896.27A.51.51 0 0 1 .15 7.17l2.382-2.386c.41-.41.947-.67 1.524-.734h.006l2.4-.238C9.005 1.55 11.087.582 12.623.208c.89-.217 1.59-.232 2.08-.188.244.023.435.06.57.093q.1.026.16.045c.184.06.279.13.351.295l.029.073a3.5 3.5 0 0 1 .157.721c.055.485.051 1.178-.159 2.065m-4.828 7.475.04-.04-.107 1.081a1.54 1.54 0 0 1-.44.913l-1.298 1.3.054-.38c.072-.506-.034-.993-.172-1.418a9 9 0 0 0-.164-.45c.738-.065 1.462-.38 2.087-1.006M5.205 5c-.625.626-.94 1.351-1.004 2.09a9 9 0 0 0-.45-.164c-.424-.138-.91-.244-1.416-.172l-.38.054 1.3-1.3c.245-.246.566-.401.91-.44l1.08-.107zm9.406-3.961c-.38-.034-.967-.027-1.746.163-1.558.38-3.917 1.496-6.937 4.521-.62.62-.799 1.34-.687 2.051.107.676.483 1.362 1.048 1.928.564.565 1.25.941 1.924 1.049.71.112 1.429-.067 2.048-.688 3.079-3.083 4.192-5.444 4.556-6.987.183-.771.18-1.345.138-1.713a3 3 0 0 0-.045-.283 3 3 0 0 0-.3-.041Z"/>
+                        <path d="M7.009 12.139a7.6 7.6 0 0 1-1.804-1.352A7.6 7.6 0 0 1 3.794 8.86c-1.102.992-1.965 5.054-1.839 5.18.125.126 3.936-.896 5.054-1.902Z"/>
+                      </svg>
+                </button>
+            </div>
+
+            <div class="mb-3 mt-5">
+                <small class="text-muted">Optional file upload: .pdf, .docx, .txt</small>
+                <input type="file" class="form-control rounded-pill text-muted " id="files" name="files" multiple>
+            </div>
+
+            <div class="choice-groups">
+                <!-- Difficulty Section -->
+                <div class="choice-section">
+                    <h5 class="text-muted">Difficulty Level</h5>
+                    <div class="radio-card card" onclick="selectCard(this, 'easy')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="question_difficulty" value="easy">
+                                <div>
+                                    <h5 class="card-title mb-1">Easy</h5>
+                                    <p class="card-text text-muted small">Basic concepts and straightforward questions
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-card card" onclick="selectCard(this, 'average')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="question_difficulty" value="average">
+                                <div>
+                                    <h5 class="card-title mb-1">Average</h5>
+                                    <p class="card-text text-muted small">Moderate complexity and some challenges</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-card card" onclick="selectCard(this, 'hard')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="question_difficulty" value="hard">
+                                <div>
+                                    <h5 class="card-title mb-1">Hard</h5>
+                                    <p class="card-text text-muted small">Advanced concepts and complex problems</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tone Section -->
+                <div class="choice-section">
+                    <h5 class="text-muted">Tone</h5>
+                    <div class="radio-card card" onclick="selectCard(this, 'casual')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="tone" value="casual">
+                                <div>
+                                    <h5 class="card-title mb-1">Casual</h5>
+                                    <p class="card-text text-muted small">Friendly and conversational style</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-card card" onclick="selectCard(this, 'professional')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="tone" value="professional">
+                                <div>
+                                    <h5 class="card-title mb-1">Professional</h5>
+                                    <p class="card-text text-muted small">Clear and business-like approach</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-card card" onclick="selectCard(this, 'academic')">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <input type="radio" name="tone" value="academic">
+                                <div>
+                                    <h5 class="card-title mb-1"> Academic</h5>
+                                    <p class="card-text text-muted small">Formal and scholarly presentation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% else %}
+        <p>You are currently logged out, you can <a href="{% url 'signup' %}">sign up</a> or <a
+                href="{% url 'login' %}">login</a></p>
+        {% endif %}
+    </div>
+
+    <script>
+        function selectCard(cardElement, value) {
+            const name = cardElement.querySelector('input[type="radio"]').name;
+            document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+                input.closest('.radio-card').classList.remove('selected');
+            });
+            
+            cardElement.classList.add('selected');
+            const radio = cardElement.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('submitButton').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.getElementById('submitButton').disabled = false;
+        }
+
+        function submitSuggestion(topic) {
+            // Set the topic in the input field
+            document.getElementById('topicInput').value = topic;
+
+            // Select default values if none are selected
+            if (!document.querySelector('input[name="question_difficulty"]:checked')) {
+                document.querySelector('input[value="average"]').checked = true;
+                document.querySelector('input[value="average"]').closest('.radio-card').classList.add('selected');
+            }
+            if (!document.querySelector('input[name="tone"]:checked')) {
+                document.querySelector('input[value="casual"]').checked = true;
+                document.querySelector('input[value="casual"]').closest('.radio-card').classList.add('selected');
+            }
+
+            // Submit the form
+            document.getElementById('quizForm').submit();
+            showLoading();
+        }
+
+        // Handle form submission
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            showLoading();
+
+            if (!document.querySelector('input[name="question_difficulty"]:checked')) {
+                document.querySelector('input[value="average"]').checked = true;
+                document.querySelector('input[value="average"]').closest('.radio-card').classList.add('selected');
+            }
+            if (!document.querySelector('input[name="tone"]:checked')) {
+                document.querySelector('input[value="casual"]').checked = true;
+                document.querySelector('input[value="casual"]').closest('.radio-card').classList.add('selected');
+            }
+        });
+
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    </script>
+
+    {% endblock %}

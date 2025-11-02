@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="col-md-6 offset-md-3">
+    <form method="GET" class="mb-4">
+        <div class="flex-wrapper" style="display: flex;">
+            <input type="text" class="form-control rounded-pill me-1" name="query" placeholder="Search by name or nickname"
+                value="{{ search_query|default:'' }}">
+            <button class="btn btn-outline-secondary rounded-pill" type="submit"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                    height="16" fill="whitesmoke" class="bi bi-search" viewBox="0 0 16 16">
+                    <path
+                        d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                </svg></button>
+        </div>
+    </form>
+
+    {% if received_requests %}
+    <div class="card mb-4">
+        <div class="card-header">Pending Friend Requests</div>
+        <ul class="list-group list-group-flush">
+            {% for req in received_requests %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ req.from_user.nickname }}
+                <div>
+                    <form method="POST" action="{% url 'accept_friend_request' req.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                    </form>
+                    <form method="POST" action="{% url 'decline_friend_request' req.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if user_list %}
+    <div class="card mb-4">
+        <div class="card-header">Search Results</div>
+        <ul class="list-group list-group-flush">
+            {% for user in user_list %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ user.nickname }}
+                {% if user in friends %}
+                <span class="badge bg-success">Already Friends</span>
+                {% else %}
+                {% for req in sent_requests %}
+                {% if req.to_user == user %}
+                <span class="badge bg-secondary">Request Sent</span>
+                {% endif %}
+                {% endfor %}
+                <form method="POST" action="{% url 'send_friend_request' user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm">Add Friend</button>
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">Your Friends</div>
+        {% if friends %}
+        <ul class="list-group list-group-flush">
+            {% for friend in friends %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ friend.nickname }}
+                <form method="post" action="{% url 'unfriend' friend.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
+                            class="bi bi-person-dash" viewBox="0 0 16 16">
+                            <path
+                                d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M11 12h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1m0-7a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                            <path
+                                d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c1.093.07 1.878.32 2.44.551a.5.5 0 0 1 .307.933A3.6 3.6 0 0 1 8.256 14" />
+                        </svg>
+                        Unfriend
+                    </button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body">
+            <p class="text-muted">No friends yet. Start adding friends above!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

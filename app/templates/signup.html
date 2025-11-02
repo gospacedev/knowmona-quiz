@@ -1,0 +1,51 @@
+{% extends 'auth_base.html' %}
+{% block content %}
+
+
+<div>
+	<form method="POST" action="">
+		{% if form.errors %}
+		<div class="alert alert-warning alert-dismissible fade show" role="alert">
+			Your Form Has Errors
+			{% for field in form %}
+			{% if field.errors %}
+			{{ field.errors }}
+			{% endif %}
+			{% endfor %}
+			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+		{% endif %}
+		
+		{% csrf_token %}
+		<div class="card pt-4 pb-5 px-5 mt-2 bg-card-primary">
+			<h2 style="text-align: center;">sign up</h2>
+			<br>
+
+			{{ form.as_p }}
+
+			<button type="submit" class="btn w-100 btn-success mt-2 rounded-pill">Create</button>
+		</div>
+
+		<div class="card pt-4 pb-4 px-5 mt-3 bg-card-primary">
+			<div id="g_id_onload"
+				data-client_id="484469051472-imsb2l4o7hk04u4chdham8mb9fa3f4q4.apps.googleusercontent.com"
+				data-context="use" data-ux_mode="redirect" data-login_uri="https://www.knowmona.com/auth-receiver"
+				style="background-color: black;" data-auto_prompt="false">
+			</div>
+
+			<div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black"
+				data-text="signup_with" data-size="large" data-logo_alignment="center" data-width="400">
+			</div>
+
+			<button id="custom-google-btn" class="btn rounded-pill btn-success" style="color: whitesmoke;"><svg
+					xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-google"
+					viewBox="0 0 18 18">
+					<path
+						d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z" />
+				</svg> Sign up with Google</button>
+	
+		</div>
+	</form>
+</div>
+
+{% endblock %}
