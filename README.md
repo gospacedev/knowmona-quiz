@@ -33,7 +33,7 @@ Install the required libraries and tools:
 pip install -r requirements.txt
 ```
 
-Input API keys for access to third party services in the env file:
+Create an .env file and input API keys for access to third party services:
 ```env
 AWS_ACCESS_KEY_ID=<<AWS_ACCESS_KEY_ID>>
 AWS_SECRET_ACCESS_KEY=<<AWS_SECRET_ACCESS_KEY>>
