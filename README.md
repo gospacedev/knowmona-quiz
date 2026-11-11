@@ -2,9 +2,6 @@
 
 Knowmona is an AI-powred larning game that allows anyone to create quizzes about anything just by typing any topic!
 
-<video width="630" height="300" src="https://github.com/user-attachments/assets/b97d5c75-f9f3-42ed-9740-23cc4a864cdf
-"></video>
-
 It is a application gives out a multiple choices and explanations for the questions in th quiz and a list of sources refered to by the LLM. A user can also uload files, such as PDFs and DOCXs, and the AI will generate a quiz about it. There is also are feature wherein users can friend other users and publicly share the quizzies that they have created with them. The difficulty and the tine of the quiz can also be  personalized by the user.
 
 It uses Django as its web framework, Open AI's LLMs for content genration, Google's programmable search engine for extracting external information used for reference and Heroku of web hosting.
